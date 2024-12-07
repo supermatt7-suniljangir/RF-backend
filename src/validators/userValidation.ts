@@ -40,7 +40,7 @@ const UserSchema = z.object({
     .string()
     .min(6, "Password must be at least 6 characters")
     .max(128, "Password cannot exceed 128 characters")
-    .optional(), // Optional for cases like updates where password is not provided
+    .optional(), 
   profile: ProfileSchema.optional(),
 });
 
@@ -52,7 +52,7 @@ export const validateUser = async (
 ): Promise<any> => {
   try {
     // If it's an update (PATCH request), make all fields optional
-    const schema = req.method === "PATCH" ? UserSchema.partial() : UserSchema;
+    const schema = req.method === "PUT" ? UserSchema.partial() : UserSchema;
 
     await schema.parseAsync(req.body);
     next();

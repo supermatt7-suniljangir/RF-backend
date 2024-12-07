@@ -6,6 +6,8 @@ import jwt from "jsonwebtoken";
 import { googleAuth } from "./googleAuth.controller";
 import Project from "../models/project/project.model";
 import { Types } from "mongoose";
+import { Profile, Social, UserDocument, UserType } from "../types/user";
+import logger from "../logs/logger";
 
 // @desc   Auth user & get token
 // @route  POST /api/users/login
@@ -25,7 +27,6 @@ const authUser = asyncHandler(
         throw new Error("Google authentication failed: " + error.message);
       }
     } else {
-      console.log("else block called");
       const user = await User.findOne({ email }).select("+password");
       console.log(user);
       if (!user || !user.comparePassword!(password)) {
@@ -97,28 +98,89 @@ const getUserProfile = asyncHandler(async (req: Request, res: Response) => {
 // @desc   Update user profile
 // @route  PUT /api/users/profile
 // @access Private
+// const updateUserProfile = asyncHandler(async (req: Request, res: Response) => {
+//   const user = await User.findById(req.user?._id);
+//   if (user) {
+//     user.fullName = req.body.fullName || user.fullName;
+//     user.email = req.body.email || user.email;
+//     if (req.body.password) {
+//       user.password = req.body.password;
+//     }
+
+//     await user.save();
+
+//     res.json({
+//       _id: user._id,
+//       fullName: user.fullName,
+//       email: user.email,
+//       profile: user.profile,
+//       token: generateToken(res, user._id),
+//     });
+//   } else {
+//     res.status(404);
+//     throw new Error("User not found");
+//   }
+// });
+
 const updateUserProfile = asyncHandler(async (req: Request, res: Response) => {
-  const user = await User.findById(req.user?._id);
-  if (user) {
-    user.fullName = req.body.fullName || user.fullName;
-    user.email = req.body.email || user.email;
-    if (req.body.password) {
-      user.password = req.body.password;
-    }
+  let user: UserDocument | null = await User.findById(req.user?._id);
 
-    await user.save();
-
-    res.json({
-      _id: user._id,
-      fullName: user.fullName,
-      email: user.email,
-      profile: user.profile,
-      token: generateToken(res, user._id),
-    });
-  } else {
+  if (!user) {
     res.status(404);
     throw new Error("User not found");
   }
+
+  // initialize profile if it doesn't exist
+  if (!user.profile) {
+    user.profile = {} as Profile;
+  }
+
+  // Handle profile updates with deep merging
+  if (req.body.profile) {
+    // Handle regular profile fields
+    Object.keys(req.body.profile).forEach((field) => {
+      if (field !== "social") {
+        // Type assertion since we know these fields exist in Profile type
+        (user.profile as Profile)[field as keyof Omit<Profile, "social">] =
+          req.body.profile[field];
+      }
+    });
+
+    // Handle social media updates separately
+    if (req.body.profile.social) {
+      if (!user.profile.social) {
+        user.profile.social = {} as Social;
+      }
+
+      Object.keys(req.body.profile.social).forEach((field) => {
+        // Type assertion since we know these fields exist in Social type
+        (user.profile!.social as Social)[field as keyof Social] =
+          req.body.profile.social[field];
+      });
+    }
+  }
+
+  // Handle other top-level fields
+  Object.keys(req.body).forEach((field) => {
+    if (
+      field in user.schema.paths &&
+      field !== "password" &&
+      field !== "profile"
+    ) {
+      (user as UserType)[field as keyof UserType] = req.body[field];
+    }
+  });
+
+  await user.save();
+
+  const updatedUser = await User.findById(user._id);
+
+  if (!updatedUser) {
+    res.status(500);
+    throw new Error("Error fetching updated user");
+  }
+
+  res.json(updatedUser.toObject());
 });
 
 // @desc   Get all users

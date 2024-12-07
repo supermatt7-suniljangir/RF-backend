@@ -1,23 +1,58 @@
-import express, { Request, Response } from "express";
+import express, { NextFunction, Request, Response } from "express";
 const app = express();
 import dotenv from "dotenv";
 dotenv.config();
-import morgan from "morgan";
+import compression from "compression";
 import userRoutes from "./routes/userRoutes";
 import ProjectRoutes from "./routes/projectRoutes";
 import { PORT } from "./config/configURLs";
 import { connectDB, disconnectDB } from "./config/db";
 import cookieParser from "cookie-parser";
-import { errorHandler, notFound } from "./middlewares/error";
+import { errorHandler } from "./middlewares/error";
 import cors from "cors";
 import helmet from "helmet";
+import logger from "./logs/logger";
+import expressWinston from "express-winston";
 
 app.use(cookieParser());
 app.use(express.json());
-app.use(morgan("dev")); // 'dev' is a predefined format for concise logging
+app.use(compression());
+app.use(express.urlencoded({ extended: true, limit: "10kb" }));
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const start = Date.now();
+  const originalUrl = req.originalUrl;
+
+  res.on("finish", () => {
+    const duration = Date.now() - start;
+    logger.info(
+      `${req.method} ${originalUrl} → ${res.statusCode} (${duration}ms)`,
+      {
+        method: req.method,
+        url: originalUrl,
+        statusCode: res.statusCode,
+        duration,
+      }
+    );
+  });
+
+  next();
+});
+// Centralized error logging middleware
+app.use(
+  expressWinston.errorLogger({
+    winstonInstance: logger,
+    meta: true,
+  })
+);
+
+// Enhanced CORS with more strict configuration
 app.use(
   cors({
-    origin: "http://localhost:5173", // Your Next.js frontend URL
+    origin:
+      process.env.NODE_ENV === "production"
+        ? ["https://yourdomain.com", "https://www.yourdomain.com"]
+        : "http://localhost:5173",
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: [
@@ -31,18 +66,18 @@ app.use(
       "Date",
       "X-Api-Version",
     ],
-    exposedHeaders: ["set-cookie"], // Add this if you're setting cookies
-  })
-);
-app.use(
-  helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" }, // Add this if you're serving images/resources
+    exposedHeaders: ["set-cookie"],
+    maxAge: 86400,
   })
 );
 
-app.get("/", (_: Request, res: Response) => {
-  res.json({ message: "Hello World!" });
-});
+app.use(
+  helmet({
+    contentSecurityPolicy: process.env.NODE_ENV === "production" ? {} : false,
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+  })
+);
 
 app.use("/api/users", userRoutes);
 app.use("/api/projects", ProjectRoutes);

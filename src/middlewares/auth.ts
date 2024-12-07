@@ -32,15 +32,11 @@ export const optionalAuth = (
 };
 // Authentication Middleware
 export const auth = (req: Request, res: Response, next: NextFunction): void => {
-  // Get token from HTTP-only cookie instead of Authorization header
-  console.log(req.cookies);
   const token = req.cookies.auth_token;
-  console.log(token);
   if (!token) {
     res.status(403);
     throw new Error("Unauthorized - No token provided");
   }
-console.log("token is found");
   try {
     const decoded = jwt.verify(token, JWT_SECRET!) as JwtPayload;
     if (!decoded) {

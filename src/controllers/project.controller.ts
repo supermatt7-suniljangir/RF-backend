@@ -4,8 +4,6 @@ import Project from "../models/project/project.model";
 import User from "../models/user/user.model";
 
 export const getProjects = async (req: Request, res: Response) => {
-  console.log("this function was called");
-
   try {
     const projects = await Project.find({ status: "published" })
       .select("title thumbnail stats creator featured publishedAt status")
@@ -29,12 +27,9 @@ export const getProjectsByUser = async (
   req: Request,
   res: Response
 ): Promise<any> => {
-  console.log("function was called");
   try {
     // Use the authenticated user's ID if no userId is provided in params
     const userId = req.params.userId || req.user?._id;
-    console.log(userId, req?.user?._id);
-    // Comprehensive ID validation
     if (!userId) {
       return res.status(401).json({
         success: false,
