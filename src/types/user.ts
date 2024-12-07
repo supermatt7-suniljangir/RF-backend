@@ -1,6 +1,7 @@
 // types/user.ts
 
 import { Document } from "mongoose";
+import { ProjectMini } from "./project";
 
 // Social interface
 export interface Social {
@@ -20,26 +21,25 @@ export interface Profile {
   following?: number;
   website?: string;
   phone?: string;
+  availableForHire?: boolean;
   social?: Social;
 }
 
 // User interface
 export interface UserType {
   _id?: string;
-  token: string;
-  expiresIn: number;
   email: string;
   fullName: string;
   profile?: Profile;
   password?: string;
+  projects: string[];
 }
 export interface UserDocument extends Document {
-  token?: string;
-  expiresIn?: number;
   email: string;
   fullName: string;
   profile?: Profile;
   password?: string;
+  projects?: string[];
   comparePassword?: (enteredPassword: string) => Promise<boolean>;
 }
 export interface AuthResponse {

@@ -4,6 +4,8 @@ import asyncHandler from "../middlewares/asyncHanlder";
 import User from "../models/user/user.model";
 import jwt from "jsonwebtoken";
 import { googleAuth } from "./googleAuth.controller";
+import Project from "../models/project/project.model";
+import { Types } from "mongoose";
 
 // @desc   Auth user & get token
 // @route  POST /api/users/login
@@ -23,7 +25,7 @@ const authUser = asyncHandler(
         throw new Error("Google authentication failed: " + error.message);
       }
     } else {
-      console.log('else block called');
+      console.log("else block called");
       const user = await User.findOne({ email }).select("+password");
       console.log(user);
       if (!user || !user.comparePassword!(password)) {
@@ -78,12 +80,12 @@ const registerUser = asyncHandler(
   }
 );
 
-// @desc   Get user profile
-// @route  GET /api/users/profile
-// @access Private
 const getUserProfile = asyncHandler(async (req: Request, res: Response) => {
-  const user = await User.findById(req.user?._id);
-  console.log(user);
+  const user = await User.findById(req.user?._id).populate({
+    path: "projects",
+    select: "_id title thumbnail stats featured publishedAt status",
+  });
+
   if (user) {
     res.status(200).json(user);
   } else {
@@ -97,7 +99,6 @@ const getUserProfile = asyncHandler(async (req: Request, res: Response) => {
 // @access Private
 const updateUserProfile = asyncHandler(async (req: Request, res: Response) => {
   const user = await User.findById(req.user?._id);
-
   if (user) {
     user.fullName = req.body.fullName || user.fullName;
     user.email = req.body.email || user.email;
@@ -145,11 +146,24 @@ const deleteUser = asyncHandler(async (req: Request, res: Response) => {
 // @route  GET /api/users/:id
 // @access Private/Admin
 const getUserById = asyncHandler(async (req: Request, res: Response) => {
+  if (!Types.ObjectId.isValid(req.params.id)) {
+    res.status(404).json({
+      success: false,
+      message: "Invalid user ID",
+    });
+    throw new Error("Invalid user ID");
+  }
   const user = await User.findById(req.params.id);
   if (user) {
-    res.json(user);
+    res.json({
+      success: true,
+      data: user,
+    });
   } else {
-    res.status(404);
+    res.status(404).json({
+      success: false,
+      message: "User not found",
+    });
     throw new Error("User not found");
   }
 });
@@ -232,7 +246,6 @@ const generateToken = (res: Response, _id: any): string => {
 
   return token; // Optionally return token if needed elsewhere
 };
-
 
 const logoutUser = (req: Request, res: Response): void => {
   try {

@@ -19,6 +19,7 @@ const socialSchema = new Schema<Social>(
 const profileSchema = new Schema<Profile>(
   {
     bio: { type: String },
+    availableForHire: { type: Boolean },
     avatar: { type: String },
     cover: { type: String },
     followers: { type: Number },
@@ -33,12 +34,11 @@ const profileSchema = new Schema<Profile>(
 // Define User schema with `password` and required fields
 const userSchema = new Schema<UserDocument>(
   {
-    token: { type: String },
-    expiresIn: { type: Number },
     email: { type: String, required: true, unique: true },
     fullName: { type: String, required: true },
     password: { type: String, select: false }, // Password with select: false to exclude from queries by default
     profile: profileSchema,
+    projects: [{ type: Schema.Types.ObjectId, ref: "Project" }], // Array of references to Project documents
   },
   { timestamps: true, versionKey: false }
 );

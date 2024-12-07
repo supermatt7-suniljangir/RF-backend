@@ -23,7 +23,7 @@ interface IProject extends Document {
   publishedAt: Date;
   createdAt?: Date;
   updatedAt?: Date;
-  status: "draft" | "published" | "archived";
+  status: "draft" | "published";
   projectUrl?: string;
   copyright: {
     license: string;
@@ -83,7 +83,7 @@ const ProjectSchema = new Schema<IProject>(
 
     status: {
       type: String,
-      enum: ["draft", "published", "archived"],
+      enum: ["draft", "published"],
       default: "draft",
     },
     projectUrl: String,
