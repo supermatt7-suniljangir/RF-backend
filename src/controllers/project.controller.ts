@@ -1,9 +1,10 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { Types } from "mongoose";
 import Project from "../models/project/project.model";
 import User from "../models/user/user.model";
+import { AppError } from "../middlewares/error";
 
-export const getProjects = async (req: Request, res: Response) => {
+export const getProjects = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const projects = await Project.find({ status: "published" })
       .select("title thumbnail stats creator featured publishedAt status")
@@ -15,35 +16,29 @@ export const getProjects = async (req: Request, res: Response) => {
       projects,
     });
   } catch (error) {
-    console.error("Error fucking projects:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch projects",
-    });
+    next(new AppError("Failed to fetch projects", 500));
   }
 };
 
 export const getProjectsByUser = async (
-  req: Request,
-  res: Response
+  req: Request, 
+  res: Response, 
+  next: NextFunction
 ): Promise<any> => {
   try {
     // Use the authenticated user's ID if no userId is provided in params
     const userId = req.params.userId || req.user?._id;
     if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: "Authentication required to fetch projects",
-      });
+      return next(new AppError("Authentication required to fetch projects", 401));
     }
+    
     // Ensure the ID is a valid MongoDB ObjectId
     const validatedUserId = Types.ObjectId.isValid(userId)
       ? new Types.ObjectId(userId)
       : null;
 
     if (!validatedUserId) {
-      res.status(400);
-      throw new Error("Invalid user ID format");
+      return next(new AppError("Invalid user ID format", 400));
     }
 
     // Determine if it's the user's own profile (using toString() for safe comparison)
@@ -75,22 +70,18 @@ export const getProjectsByUser = async (
       data: projects,
     });
   } catch (error: any) {
-    console.error("Error in getUserProjects:", error);
-
-    // More granular error handling
     if (error.name === "MongoError" || error.name === "MongooseError") {
-      res.status(500);
-      throw new Error("MongoDB error fetching user projects" + error.message);
+      return next(new AppError(`MongoDB error fetching user projects: ${error.message}`, 500));
     }
 
-    res.status(500);
-    throw new Error("Error fetching user projects");
+    next(new AppError("Error fetching user projects", 500));
   }
 };
 
 export const createProject = async (
-  req: Request,
-  res: Response
+  req: Request, 
+  res: Response, 
+  next: NextFunction
 ): Promise<any> => {
   try {
     // Create the project first
@@ -111,22 +102,17 @@ export const createProject = async (
     });
   } catch (error: any) {
     if (error.code === 11000) {
-      return res.status(400).json({
-        success: false,
-        error: "A project with this slug already exists",
-      });
+      return next(new AppError("A project with this slug already exists", 400));
     }
 
-    return res.status(500).json({
-      success: false,
-      error: "Error creating project",
-    });
+    next(new AppError("Error creating project", 500));
   }
 };
 
 export const updateProject = async (
-  req: Request,
-  res: Response
+  req: Request, 
+  res: Response, 
+  next: NextFunction
 ): Promise<any> => {
   try {
     const { id } = req.params;
@@ -148,10 +134,7 @@ export const updateProject = async (
     );
 
     if (!project) {
-      return res.status(404).json({
-        success: false,
-        error: "Project not found or unauthorized",
-      });
+      return next(new AppError("Project not found or unauthorized", 404));
     }
 
     return res.status(200).json({
@@ -159,16 +142,14 @@ export const updateProject = async (
       data: project,
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: "Error updating project",
-    });
+    next(new AppError("Error updating project", 500));
   }
 };
 
 export const getProjectById = async (
-  req: Request,
-  res: Response
+  req: Request, 
+  res: Response, 
+  next: NextFunction
 ): Promise<any> => {
   try {
     const { id } = req.params;
@@ -178,10 +159,7 @@ export const getProjectById = async (
     );
 
     if (!project) {
-      return res.status(404).json({
-        success: false,
-        error: "Project not found",
-      });
+      return next(new AppError("Project not found", 404));
     }
 
     // Increment views if project is published
@@ -195,14 +173,14 @@ export const getProjectById = async (
       data: project,
     });
   } catch (error) {
-    res.status(500);
-    throw new Error("Error fetching projects: " + error);
+    next(new AppError(`Error fetching project: ${error}`, 500));
   }
 };
 
 export const searchProjects = async (
-  req: Request,
-  res: Response
+  req: Request, 
+  res: Response, 
+  next: NextFunction
 ): Promise<any> => {
   try {
     const {
@@ -252,10 +230,7 @@ export const searchProjects = async (
       },
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: "Error searching projects",
-    });
+    next(new AppError("Error searching projects", 500));
   }
 };
 
@@ -271,47 +246,3 @@ export const checkProjectOwnership = async (
 
   return !!project;
 };
-
-// v2:
-/*
-// 1. Basic Search with Regex (Simple but Limited)
-export const searchProjectsWithRegex = async (req: Request, res: Response) => {
-  try {
-    const { 
-      query, 
-      tags, 
-      page = 1, 
-      limit = 10 
-    } = req.query;
-
-    const queryOptions: any = { status: 'published' };
-
-    // Partial match for title or slug
-    if (query) {
-      queryOptions.$or = [
-        { title: { $regex: String(query), $options: 'i' } },  // 'i' for case-insensitive
-        { slug: { $regex: String(query), $options: 'i' } },
-        { description: { $regex: String(query), $options: 'i' } }
-      ];
-    }
-
-    // Partial match for tags
-    if (tags) {
-      const tagArray = Array.isArray(tags) ? tags : [tags];
-      queryOptions['tags.name'] = { 
-        $in: tagArray.map(tag => new RegExp(String(tag), 'i')) 
-      };
-    }
-
-    const projects = await Project.find(queryOptions)
-      .sort({ publishedAt: -1 })
-      .skip((Number(page) - 1) * Number(limit))
-      .limit(Number(limit));
-
-    return res.json({ success: true, data: projects });
-  } catch (error) {
-    return res.status(500).json({ success: false, error: 'Search failed' });
-  }
-};
-
-*/

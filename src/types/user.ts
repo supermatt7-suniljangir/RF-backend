@@ -17,10 +17,10 @@ export interface Profile {
   bio?: string;
   avatar?: string;
   cover?: string;
-  followers?: number;
-  following?: number;
+  followers?: string[];//baad me kadi karsya tem milsi jnaa
+  following?: string[];//baad me kadi karsya tem milsi jnaa
   website?: string;
-  phone?: string;
+  profession?: string;
   availableForHire?: boolean;
   social?: Social;
 }
@@ -53,4 +53,16 @@ export interface UserResponse {
   email: string;
   fullName: string;
   profile?: Profile;
+}
+
+// MiniUser interface
+export interface MiniUser {
+  _id: string;
+  fullName: string;
+  avatar?: string;
+  profession?: string;
+  followers?: string[];//abaar tem koni
+  followersCount?: number;
+  projects?: string[];
+  availableForHire?: boolean;
 }

@@ -9,18 +9,15 @@ const SocialSchema = z.object({
   github: z.string().url("Invalid GitHub URL").optional(),
 });
 
-// Profile Schema
 const ProfileSchema = z.object({
   bio: z.string().max(300, "Bio cannot exceed 300 characters").optional(),
   avatar: z.string().url("Invalid avatar URL").optional(),
   cover: z.string().url("Invalid cover URL").optional(),
-  followers: z.number().int().nonnegative().optional(),
-  following: z.number().int().nonnegative().optional(),
+  followers: z.array(z.string()).optional(), // Array of user IDs
+  following: z.array(z.string()).optional(), // Array of user IDs
   website: z.string().url("Invalid website URL").optional(),
-  phone: z
-    .string()
-    .regex(/^\+?[0-9]{10,15}$/, "Invalid phone number")
-    .optional(),
+  profession: z.string().optional(),
+  availableForHire: z.boolean().optional(),
   social: SocialSchema.optional(),
 });
 
@@ -40,7 +37,7 @@ const UserSchema = z.object({
     .string()
     .min(6, "Password must be at least 6 characters")
     .max(128, "Password cannot exceed 128 characters")
-    .optional(), 
+    .optional(),
   profile: ProfileSchema.optional(),
 });
 

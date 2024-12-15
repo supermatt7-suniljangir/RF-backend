@@ -22,10 +22,16 @@ const profileSchema = new Schema<Profile>(
     availableForHire: { type: Boolean },
     avatar: { type: String },
     cover: { type: String },
-    followers: { type: Number },
-    following: { type: Number },
+    followers: {
+      type: [{ type: Schema.Types.ObjectId, ref: "User" }], // Always store as an array of ObjectId
+      default: [], // Default to an empty array
+    },
+    following: {
+      type: [{ type: Schema.Types.ObjectId, ref: "User" }], // Always store as an array of ObjectId
+      default: [], // Default to an empty array
+    },
     website: { type: String },
-    phone: { type: String },
+    profession: { type: String },
     social: socialSchema,
   },
   { _id: false, versionKey: false }
@@ -38,7 +44,10 @@ const userSchema = new Schema<UserDocument>(
     fullName: { type: String, required: true },
     password: { type: String, select: false }, // Password with select: false to exclude from queries by default
     profile: profileSchema,
-    projects: [{ type: Schema.Types.ObjectId, ref: "Project" }], // Array of references to Project documents
+    projects: {
+      type: [{ type: Schema.Types.ObjectId, ref: "Project" }],
+      default: [],
+    }, // Array of references to Project documents
   },
   { timestamps: true, versionKey: false }
 );

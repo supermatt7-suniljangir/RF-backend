@@ -10,7 +10,7 @@ interface RateLimitOptions {
 
 export const createRateLimiter = ({
   windowMs = 15 * 60 * 1000, // default 15 minutes
-  max = 100, // default 100 requests
+  max = 10000, // default 100 requests
   message = "Too many requests, please try again later",
 }: RateLimitOptions = {}): RateLimitRequestHandler => {
   return rateLimit({
@@ -28,8 +28,8 @@ export const createRateLimiter = ({
 // Predefined rate limit configurations
 export const limiters = {
   auth: createRateLimiter({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // 5 attempts
+    windowMs: 0 * 60 * 1000, // 15 minutes
+    max: 50, // 5 attempts
     message: "Too many login attempts, please try again later",
   }),
 
@@ -37,7 +37,19 @@ export const limiters = {
 
   intense: createRateLimiter({
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: 50, // more restrictive
+    max: 500, // more restrictive
     message: "Hourly request limit exceeded",
+  }),
+  search: createRateLimiter({
+    windowMs: 10 * 60 * 1000, // 15 minutes window
+    max: 100, // 100 searches per 15 minutes
+    message: "Too many search requests, please refine your search or try again later",
+  }),
+
+  // More intensive search limiter for complex or resource-heavy searches
+  advancedSearch: createRateLimiter({
+    windowMs: 30 * 60 * 1000, // 30 minutes window
+    max: 50, // 50 advanced searches per 30 minutes
+    message: "Advanced search limit reached. Please wait before performing more complex searches.",
   }),
 };

@@ -27,6 +27,7 @@ import { UserType } from "./user";
     featured: boolean;
     publishedAt: Date;
     status: 'draft' | 'published';
+    category: string;
   }
   // Main Project Type
   export interface ProjectType {
@@ -40,7 +41,7 @@ import { UserType } from "./user";
     collaborators?: string[]; // Array of user IDs
     tags: string[];
     tools: ITools[];
-    categories: string[];
+    category: string;
     stats: {
       views: number;
       likes: number;

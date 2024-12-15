@@ -1,15 +1,17 @@
 import mongoose from "mongoose";
 import { MONGO_URI } from "./configURLs";
+import logger from "../logs/logger";
+import { AppError } from "../middlewares/error";
 const connectDB = async () => {
   try {
     if (!MONGO_URI) {
-      console.log("invalid mongo uri");
-      throw new Error("Invalid mongo uri");
+      logger.error("Invalid mongo uri");
+      throw new AppError("invalid mongo uri", 500);
     }
     const conn = await mongoose.connect(MONGO_URI);
-    console.log(`Mongo db connected: `, conn.connection.host);
+    logger.info(`MongoDB Connected: ${conn.connection.host}`);
   } catch (err) {
-    console.log(`Error: ${err as Error}`);
+    logger.error(`Error: ${err as Error}`);
     process.exit(1);
   }
 };
@@ -17,9 +19,9 @@ const connectDB = async () => {
 const disconnectDB = async () => {
   try {
     await mongoose.connection.close();
-    console.log("Mongo db disconnected");
+    logger.info("MongoDB Disconnected");
   } catch (err) {
-    console.log(`Error: ${err as Error}`);
+    logger.error(`Error: ${err as Error}`);
     process.exit(1);
   }
 };

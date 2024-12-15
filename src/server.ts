@@ -4,11 +4,13 @@ import dotenv from "dotenv";
 dotenv.config();
 import compression from "compression";
 import userRoutes from "./routes/userRoutes";
+import uploadRoutes from "./routes/uploaderRoutes";
+import searchRoutes from "./routes/serachRoutes";
 import ProjectRoutes from "./routes/projectRoutes";
 import { PORT } from "./config/configURLs";
 import { connectDB, disconnectDB } from "./config/db";
 import cookieParser from "cookie-parser";
-import { errorHandler } from "./middlewares/error";
+import { globalErrorHandler, notFound } from "./middlewares/error";
 import cors from "cors";
 import helmet from "helmet";
 import logger from "./logs/logger";
@@ -81,7 +83,10 @@ app.use(
 
 app.use("/api/users", userRoutes);
 app.use("/api/projects", ProjectRoutes);
-app.use(errorHandler);
+app.use("/api/upload", uploadRoutes);
+app.use("/api/search", searchRoutes);
+app.use(notFound);
+app.use(globalErrorHandler);
 
 const initializeServer = async () => {
   try {

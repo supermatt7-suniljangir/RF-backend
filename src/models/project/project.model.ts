@@ -11,7 +11,7 @@ interface IProject extends Document {
   collaborators?: Types.ObjectId[];
   tags: string[];
   tools: ITools[];
-  categories: string[];
+  category: string;
   stats: {
     views: number;
     likes: number;
@@ -70,7 +70,7 @@ const ProjectSchema = new Schema<IProject>(
     collaborators: [{ type: Schema.Types.ObjectId, ref: "User" }],
     tags: [{ type: String }],
     tools: [ToolSchema],
-    categories: [{ type: String }],
+    category: { type: String },
     stats: {
       views: { type: Number, default: 0 },
       likes: { type: Number, default: 0 },

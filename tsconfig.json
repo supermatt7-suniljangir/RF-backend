@@ -22,6 +22,6 @@
   "include": [
     "src/**/*.ts",
     "@types/**/*" // Include all files in the `types` folder
-  ],
+, "src/cors/s3Cors.js"  ],
   "exclude": ["node_modules"]
 }
