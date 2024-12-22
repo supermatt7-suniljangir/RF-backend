@@ -90,7 +90,8 @@ export const getUserProfile = asyncHandler(
         .populate({
           path: "projects",
           select: "_id title thumbnail stats featured publishedAt status",
-        }).populate({
+        })
+        .populate({
           path: "profile.followers",
           select:
             "_id fullName profile.avatar profile.profession profile.availableForHire",
@@ -99,7 +100,7 @@ export const getUserProfile = asyncHandler(
           path: "profile.following",
           select:
             "_id fullName profile.avatar profile.profession profile.availableForHire",
-        });
+        })
 
       if (!user) {
         return next(new AppError("User not found", 404));
@@ -329,6 +330,7 @@ async function checkUserExists(email: string): Promise<boolean> {
 // @access Private
 export const logoutUser = asyncHandler(
   (req: Request, res: Response, next: NextFunction): any => {
+    console.log(req.cookies);
     try {
       // Check if the cookie exists
       if (req.cookies?.auth_token) {
@@ -339,7 +341,6 @@ export const logoutUser = asyncHandler(
           sameSite: "strict",
           path: "/",
         });
-
         res.status(200).json({ message: "Logged out successfully." });
       } else {
         return next(new AppError("No auth token found in cookies.", 400));

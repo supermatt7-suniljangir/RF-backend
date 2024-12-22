@@ -1,36 +1,5 @@
 import { Schema, model, Document, Types } from "mongoose";
-import { IComment, Imedia, ITools } from "../../types/project";
-
-interface IProject extends Document {
-  title: string;
-  description: string;
-  shortDescription: string;
-  thumbnail: string;
-  media: Imedia[];
-  creator: Types.ObjectId;
-  collaborators?: Types.ObjectId[];
-  tags: string[];
-  tools: ITools[];
-  category: string;
-  stats: {
-    views: number;
-    likes: number;
-    saves: number;
-    comments: number;
-  };
-  comments: IComment[];
-  featured: boolean;
-  publishedAt: Date;
-  createdAt?: Date;
-  updatedAt?: Date;
-  status: "draft" | "published";
-  projectUrl?: string;
-  copyright: {
-    license: string;
-    allowsDownload: boolean;
-    commercialUse: boolean;
-  };
-}
+import { IComment, ITools, ProjectDocument } from "../../types/project";
 
 const ToolSchema = new Schema<ITools>({
   name: { type: String, required: true },
@@ -38,12 +7,11 @@ const ToolSchema = new Schema<ITools>({
 });
 
 const CommentSchema = new Schema<IComment>({
-  user: { type: Schema.Types.ObjectId, ref: "User", required: true },
-  content: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now },
-});
+  content: { type: String, required: true }, // Comment content
+  userData: { type: Schema.Types.ObjectId, ref: "User" }, // Change to reference
+}, { timestamps: true });
 
-const ProjectSchema = new Schema<IProject>(
+const ProjectSchema = new Schema<ProjectDocument>(
   {
     title: { type: String, required: true },
     description: { type: String, required: true },
@@ -103,5 +71,5 @@ ProjectSchema.index({ tags: 1 }); // Index for searching projects by tags (array
 ProjectSchema.index({ creator: 1 }); // Index for fetching user's projects
 ProjectSchema.index({ categories: 1 }); // For category-based searches
 // Export model
-const Project = model<IProject>("Project", ProjectSchema);
+const Project = model<ProjectDocument>("Project", ProjectSchema);
 export default Project;

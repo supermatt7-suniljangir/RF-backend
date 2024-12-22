@@ -19,6 +19,6 @@ router.post("/register", limiters.auth, validateUser, registerUser);
 router.get("/", limiters.standard, auth, getUserProfile);
 router.put("/", limiters.standard, auth, validateUser, updateUserProfile);
 router.get("/:id", limiters.standard, getUserById);
-router.post("/logout", limiters.standard, auth, logoutUser);
+router.post("/logout", limiters.standard, logoutUser);
 
 export default router;

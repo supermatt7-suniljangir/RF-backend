@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../config/configURLs";
 import { JwtPayload } from "../types/jwt-payload";
+import { AppError } from "./error";
+import { logoutUser } from "../controllers/user.controller";
 // Optional auth middleware that sets req.user if token exists but doesn't block if no token
 export const optionalAuth = (
   req: Request,
@@ -40,21 +42,12 @@ export const auth = (req: Request, res: Response, next: NextFunction): void => {
   try {
     const decoded = jwt.verify(token, JWT_SECRET!) as JwtPayload;
     if (!decoded) {
-      res.status(401);
-      throw new Error("Unauthorized - Invalid token");
+      next(new AppError("invalid jwt", 401));
     }
     req.user = decoded;
     next();
   } catch (error: any) {
-    // Clear invalid cookie
-    res.clearCookie("auth_token", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      path: "/",
-    });
-    res.status(401);
-    throw new Error(error.message);
+    next(new AppError(error.message, 401));
   }
 };
 
@@ -68,7 +61,6 @@ export const checkRole = (roles: string[]) => {
     if (!roles.includes(req.user.role)) {
       throw new Error("Forbidden - Insufficient permissions");
     }
-
     next();
   };
 };

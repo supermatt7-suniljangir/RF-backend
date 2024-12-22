@@ -3,8 +3,13 @@ import { Types } from "mongoose";
 import Project from "../models/project/project.model";
 import User from "../models/user/user.model";
 import { AppError } from "../middlewares/error";
+import { MiniUser } from "../types/user";
 
-export const getProjects = async (req: Request, res: Response, next: NextFunction) => {
+export const getProjects = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const projects = await Project.find({ status: "published" })
       .select("title thumbnail stats creator featured publishedAt status")
@@ -21,17 +26,19 @@ export const getProjects = async (req: Request, res: Response, next: NextFunctio
 };
 
 export const getProjectsByUser = async (
-  req: Request, 
-  res: Response, 
+  req: Request,
+  res: Response,
   next: NextFunction
 ): Promise<any> => {
   try {
     // Use the authenticated user's ID if no userId is provided in params
     const userId = req.params.userId || req.user?._id;
     if (!userId) {
-      return next(new AppError("Authentication required to fetch projects", 401));
+      return next(
+        new AppError("Authentication required to fetch projects", 401)
+      );
     }
-    
+
     // Ensure the ID is a valid MongoDB ObjectId
     const validatedUserId = Types.ObjectId.isValid(userId)
       ? new Types.ObjectId(userId)
@@ -71,7 +78,12 @@ export const getProjectsByUser = async (
     });
   } catch (error: any) {
     if (error.name === "MongoError" || error.name === "MongooseError") {
-      return next(new AppError(`MongoDB error fetching user projects: ${error.message}`, 500));
+      return next(
+        new AppError(
+          `MongoDB error fetching user projects: ${error.message}`,
+          500
+        )
+      );
     }
 
     next(new AppError("Error fetching user projects", 500));
@@ -79,8 +91,8 @@ export const getProjectsByUser = async (
 };
 
 export const createProject = async (
-  req: Request, 
-  res: Response, 
+  req: Request,
+  res: Response,
   next: NextFunction
 ): Promise<any> => {
   try {
@@ -110,8 +122,8 @@ export const createProject = async (
 };
 
 export const updateProject = async (
-  req: Request, 
-  res: Response, 
+  req: Request,
+  res: Response,
   next: NextFunction
 ): Promise<any> => {
   try {
@@ -147,22 +159,46 @@ export const updateProject = async (
 };
 
 export const getProjectById = async (
-  req: Request, 
-  res: Response, 
+  req: Request,
+  res: Response,
   next: NextFunction
 ): Promise<any> => {
   try {
     const { id } = req.params;
-    const project = await Project.findById(id).populate(
-      "creator",
-      "fullName profile.avatar"
-    );
-
+    const project = await Project.findById(id)
+      .populate({
+        path: "creator",
+        select:
+          "fullName profile.avatar profile.profession profile.followers profile.availableForHire projects",
+        transform: (doc) => {
+          if (!doc) return null;
+          return {
+            userId: doc._id,
+            fullName: doc.fullName,
+            avatar: doc.profile?.avatar,
+            profession: doc.profile?.profession,
+            followersCount: doc.profile?.followers?.length || 0,
+            projects: doc.projects || [],
+            availableForHire: doc.profile?.availableForHire || false,
+          };
+        },
+      })
+      .populate({
+        path: "comments.userData",
+        select: "fullName profile.avatar",
+        transform: (doc) => {
+          if (!doc) return null;
+          return {
+            userId: doc._id,
+            fullName: doc.fullName || "Anonymous",
+            avatar: doc.profile?.avatar || "default-avatar-url.png",
+          };
+        },
+      });
     if (!project) {
       return next(new AppError("Project not found", 404));
     }
 
-    // Increment views if project is published
     if (project.status === "published") {
       project.stats.views += 1;
       await project.save();
@@ -178,8 +214,8 @@ export const getProjectById = async (
 };
 
 export const searchProjects = async (
-  req: Request, 
-  res: Response, 
+  req: Request,
+  res: Response,
   next: NextFunction
 ): Promise<any> => {
   try {

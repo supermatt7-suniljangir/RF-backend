@@ -33,7 +33,7 @@ export const limiters = {
     message: "Too many login attempts, please try again later",
   }),
 
-  standard: createRateLimiter(), // default 100 requests per hour
+  standard: createRateLimiter(), 
 
   intense: createRateLimiter({
     windowMs: 60 * 60 * 1000, // 1 hour

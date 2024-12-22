@@ -1,7 +1,7 @@
 // types/user.ts
 
 import { Document } from "mongoose";
-import { ProjectMini } from "./project";
+import { Types } from "mongoose";
 
 // Social interface
 export interface Social {
@@ -17,29 +17,32 @@ export interface Profile {
   bio?: string;
   avatar?: string;
   cover?: string;
-  followers?: string[];//baad me kadi karsya tem milsi jnaa
-  following?: string[];//baad me kadi karsya tem milsi jnaa
+  followers?: Types.ObjectId[];//baad me kadi karsya tem milsi jnaa
+  following?: Types.ObjectId[];//baad me kadi karsya tem milsi jnaa
   website?: string;
   profession?: string;
   availableForHire?: boolean;
   social?: Social;
+  Appreciations?:Types.ObjectId[];
+  bookmarks?:Types.ObjectId[];
 }
 
 // User interface
 export interface UserType {
-  _id?: string;
+  _id?: Types.ObjectId;
   email: string;
   fullName: string;
   profile?: Profile;
   password?: string;
-  projects: string[];
+  projects: Types.ObjectId[];
 }
+
 export interface UserDocument extends Document {
   email: string;
   fullName: string;
   profile?: Profile;
   password?: string;
-  projects?: string[];
+  projects?: Types.ObjectId[];
   comparePassword?: (enteredPassword: string) => Promise<boolean>;
 }
 export interface AuthResponse {
@@ -55,14 +58,12 @@ export interface UserResponse {
   profile?: Profile;
 }
 
-// MiniUser interface
 export interface MiniUser {
-  _id: string;
+  _id: Types.ObjectId; 
   fullName: string;
   avatar?: string;
   profession?: string;
-  followers?: string[];//abaar tem koni
   followersCount?: number;
-  projects?: string[];
+  projects?: Types.ObjectId[];
   availableForHire?: boolean;
 }

@@ -1,6 +1,6 @@
 // models/User.ts
 import { Schema, model, Document } from "mongoose";
-import { UserType, Profile, Social, UserDocument } from "../../types/user";
+import {  Profile, Social, UserDocument } from "../../types/user";
 import bcrypt from "bcrypt";
 import { Model } from "mongoose";
 
@@ -23,12 +23,20 @@ const profileSchema = new Schema<Profile>(
     avatar: { type: String },
     cover: { type: String },
     followers: {
-      type: [{ type: Schema.Types.ObjectId, ref: "User" }], // Always store as an array of ObjectId
-      default: [], // Default to an empty array
+      type: [{ type: Schema.Types.ObjectId, ref: "User" }],
+      default: [],
     },
     following: {
-      type: [{ type: Schema.Types.ObjectId, ref: "User" }], // Always store as an array of ObjectId
-      default: [], // Default to an empty array
+      type: [{ type: Schema.Types.ObjectId, ref: "User" }],
+      default: [],
+    },
+    Appreciations: {
+      type: [{ type: Schema.Types.ObjectId, ref: "Project" }],
+      default: [],
+    },
+    bookmarks: {
+      type: [{ type: Schema.Types.ObjectId, ref: "Project" }],
+      default: [],
     },
     website: { type: String },
     profession: { type: String },
@@ -47,7 +55,7 @@ const userSchema = new Schema<UserDocument>(
     projects: {
       type: [{ type: Schema.Types.ObjectId, ref: "Project" }],
       default: [],
-    }, // Array of references to Project documents
+    },
   },
   { timestamps: true, versionKey: false }
 );
