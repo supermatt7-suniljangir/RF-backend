@@ -4,7 +4,7 @@ import {
   PaginationMetadata,
   ProjectQueryParams,
   UserQueryParams,
-} from "../types/common";
+} from "../types/miscellaneous";
 import mongoose from "mongoose";
 import User from "../models/user/user.model";
 import Project from "../models/project/project.model";
@@ -112,8 +112,6 @@ class UserSearchUtility {
           fullName: 1,
           avatar: "$profile.avatar",
           profession: "$profile.profession",
-          followers: { $ifNull: ["$profile.followers", []] }, 
-          followersCount: { $size: { $ifNull: ["$profile.followers", []] } }, 
           projects: {
             $map: {
               input: "$projects",
@@ -238,7 +236,6 @@ class ProjectSearchUtility {
             fullName: "$creatorDetails.fullName",
             avatar: "$creatorDetails.profile.avatar",
             profession: "$creatorDetails.profile.profession",
-            followers: "$creatorDetails.profile.followers",
             projects: {
               $map: {
                 input: "$creatorDetails.projects",

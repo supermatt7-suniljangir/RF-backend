@@ -90,17 +90,7 @@ export const getUserProfile = asyncHandler(
         .populate({
           path: "projects",
           select: "_id title thumbnail stats featured publishedAt status",
-        })
-        .populate({
-          path: "profile.followers",
-          select:
-            "_id fullName profile.avatar profile.profession profile.availableForHire",
-        })
-        .populate({
-          path: "profile.following",
-          select:
-            "_id fullName profile.avatar profile.profession profile.availableForHire",
-        })
+        });
 
       if (!user) {
         return next(new AppError("User not found", 404));
@@ -232,16 +222,6 @@ export const getUserById = asyncHandler(
         .populate({
           path: "projects",
           select: "_id title thumbnail stats featured publishedAt status",
-        })
-        .populate({
-          path: "profile.followers",
-          select:
-            "_id fullName profile.avatar profile.profession profile.availableForHire",
-        })
-        .populate({
-          path: "profile.following",
-          select:
-            "_id fullName profile.avatar profile.profession profile.availableForHire",
         });
 
       if (!user) {
@@ -286,34 +266,6 @@ export const updateUser = asyncHandler(
     }
   }
 );
-
-// Validation helper
-const validateUserData = (data: {
-  email: string;
-  password: string;
-  fullName: string;
-}): string | null => {
-  const requiredFields: (keyof typeof data)[] = [
-    "email",
-    "password",
-    "fullName",
-  ];
-
-  for (const field of requiredFields) {
-    if (!data[field]) {
-      return `Field '${field}' is required`;
-    }
-  }
-
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(data.email)) return "Provide a valid email";
-  if (data.password.length < 8)
-    return "Password must be at least 8 characters long";
-  if (data.fullName.length < 3)
-    return "Name must be at least 3 characters long";
-
-  return null;
-};
 
 async function checkUserExists(email: string): Promise<boolean> {
   try {

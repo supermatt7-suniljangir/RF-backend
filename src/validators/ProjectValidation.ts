@@ -81,9 +81,7 @@ const ProjectSchema = z.object({
     .min(1, "At least one tool is required")
     .max(10, "Maximum 10 tools allowed"),
 
-  categories: z
-    .string()
-    .min(1, "category can't be empty"),
+  categories: z.string().min(1, "category can't be empty"),
 
   status: z.enum(["draft", "published", "archived"]),
 

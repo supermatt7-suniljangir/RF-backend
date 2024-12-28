@@ -5,7 +5,6 @@ import {
   getProjectById,
   getProjects,
   getProjectsByUser,
-  searchProjects,
   updateProject,
 } from "../controllers/project.controller";
 import { auth, optionalAuth } from "../middlewares/auth";
@@ -15,7 +14,6 @@ const router = Router();
 
 // Public routes with standard rate limiting
 router.get("/", limiters.standard, getProjects);
-router.get("/search", limiters.standard, searchProjects);
 
 // Specific project routes
 router.get("/:id", limiters.standard, optionalAuth, getProjectById);

@@ -1,15 +1,11 @@
 import { Schema, model, Document, Types } from "mongoose";
-import { IComment, ITools, ProjectDocument } from "../../types/project";
+import { ITools, ProjectDocument } from "../../types/project";
+import { title } from "process";
 
 const ToolSchema = new Schema<ITools>({
   name: { type: String, required: true },
   icon: String,
 });
-
-const CommentSchema = new Schema<IComment>({
-  content: { type: String, required: true }, // Comment content
-  userData: { type: Schema.Types.ObjectId, ref: "User" }, // Change to reference
-}, { timestamps: true });
 
 const ProjectSchema = new Schema<ProjectDocument>(
   {
@@ -32,6 +28,7 @@ const ProjectSchema = new Schema<ProjectDocument>(
           type: String,
           required: true,
         },
+        order: { type: Number, default: 0 },
       },
     ],
     creator: { type: Schema.Types.ObjectId, ref: "User", required: true },
@@ -45,7 +42,6 @@ const ProjectSchema = new Schema<ProjectDocument>(
       saves: { type: Number, default: 0 },
       comments: { type: Number, default: 0 },
     },
-    comments: [CommentSchema],
     featured: { type: Boolean, default: false },
     publishedAt: Date,
 
@@ -64,11 +60,10 @@ const ProjectSchema = new Schema<ProjectDocument>(
   { timestamps: true, versionKey: false }
 );
 // Only essential indexes
-ProjectSchema.index({ creator: 1 }); // For fetching user's projects
 ProjectSchema.index({ status: 1, publishedAt: -1 }); // For listing published projects by date
 ProjectSchema.index({ featured: 1 }); // Index for filtering by featured status
 ProjectSchema.index({ tags: 1 }); // Index for searching projects by tags (array index)
-ProjectSchema.index({ creator: 1 }); // Index for fetching user's projects
+ProjectSchema.index({ title: 1 }); // Index for searching projects by title
 ProjectSchema.index({ categories: 1 }); // For category-based searches
 // Export model
 const Project = model<ProjectDocument>("Project", ProjectSchema);

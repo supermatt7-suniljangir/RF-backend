@@ -6,6 +6,8 @@ import compression from "compression";
 import userRoutes from "./routes/userRoutes";
 import uploadRoutes from "./routes/uploaderRoutes";
 import searchRoutes from "./routes/serachRoutes";
+import commentsRoutes from "./routes/commentsRoutes";
+import likesRoutes from "./routes/likesRoutes";
 import ProjectRoutes from "./routes/projectRoutes";
 import { PORT } from "./config/configURLs";
 import { connectDB, disconnectDB } from "./config/db";
@@ -85,6 +87,8 @@ app.use("/api/users", userRoutes);
 app.use("/api/projects", ProjectRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/search", searchRoutes);
+app.use("/api/comments", commentsRoutes);
+app.use("/api/likes", likesRoutes);
 app.use(notFound);
 app.use(globalErrorHandler);
 

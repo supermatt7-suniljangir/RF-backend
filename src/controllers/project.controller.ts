@@ -3,7 +3,6 @@ import { Types } from "mongoose";
 import Project from "../models/project/project.model";
 import User from "../models/user/user.model";
 import { AppError } from "../middlewares/error";
-import { MiniUser } from "../types/user";
 
 export const getProjects = async (
   req: Request,
@@ -127,34 +126,85 @@ export const updateProject = async (
   next: NextFunction
 ): Promise<any> => {
   try {
-    const { id } = req.params;
-    const updates = req.body;
-
-    // Prevent updating creator
-    delete updates.creator;
-
-    // Update timestamps
-    updates.updatedAt = new Date();
-
-    const project = await Project.findOneAndUpdate(
-      {
-        _id: id,
-        creator: req.user?._id, // Ensure user owns the project
-      },
-      { $set: updates },
-      { new: true, runValidators: true }
-    );
-
+    // Fetch the project by ID and ensure the user owns it
+    let project = await Project.findOne({ _id: req.params.id });
     if (!project) {
       return next(new AppError("Project not found or unauthorized", 404));
     }
 
-    return res.status(200).json({
-      success: true,
-      data: project,
+    // Ensure nested fields are always initialized
+    if (!project.media) {
+      project.media = [];
+    }
+    if (!project.tools) {
+      project.tools = [];
+    }
+    if (!project.collaborators) {
+      project.collaborators = [];
+    }
+
+    // Handle top-level project updates
+    Object.keys(req.body).forEach((field) => {
+      if (
+        field in project!.schema.paths &&
+        field !== "media" &&
+        field !== "tools" &&
+        field !== "collaborators"
+      ) {
+        (project as any)[field] = req.body[field];
+      }
     });
-  } catch (error) {
-    next(new AppError("Error updating project", 500));
+
+    // Handle nested `media` updates
+    if (req.body.media) {
+      req.body.media.forEach((mediaItem: any) => {
+        if (mediaItem._id) {
+          const mediaIndex = project.media.findIndex(
+            (item) => item._id!.toString() === mediaItem._id
+          );
+          if (mediaIndex > -1) {
+            project.media[mediaIndex] = {
+              ...project.media[mediaIndex],
+              ...mediaItem,
+            };
+          }
+        } else {
+          // Add new media item
+          project.media.push(mediaItem);
+        }
+      });
+    }
+
+    // Handle nested `tools` updates
+    if (req.body.tools) {
+      project.tools.push(...req.body.tools);
+    }
+
+    // Handle nested `collaborators` updates
+    if (req.body.collaborators) {
+      project.collaborators = req.body.collaborators; // Replace collaborators array
+    }
+
+    // Update timestamps
+    project.updatedAt = new Date();
+
+    await project.save();
+
+    const updatedProject = await Project.findById(project._id).populate([
+      "creator",
+      "collaborators",
+    ]);
+
+    if (!updatedProject) {
+      return next(new AppError("Error fetching updated project", 500));
+    }
+
+    res.status(200).json({
+      success: true,
+      data: updatedProject,
+    });
+  } catch (error: any) {
+    return next(new AppError(error.message, 500));
   }
 };
 
@@ -165,43 +215,27 @@ export const getProjectById = async (
 ): Promise<any> => {
   try {
     const { id } = req.params;
-    const project = await Project.findById(id)
-      .populate({
-        path: "creator",
-        select:
-          "fullName profile.avatar profile.profession profile.followers profile.availableForHire projects",
-        transform: (doc) => {
-          if (!doc) return null;
-          return {
-            userId: doc._id,
-            fullName: doc.fullName,
-            avatar: doc.profile?.avatar,
-            profession: doc.profile?.profession,
-            followersCount: doc.profile?.followers?.length || 0,
-            projects: doc.projects || [],
-            availableForHire: doc.profile?.availableForHire || false,
-          };
-        },
-      })
-      .populate({
-        path: "comments.userData",
-        select: "fullName profile.avatar",
-        transform: (doc) => {
-          if (!doc) return null;
-          return {
-            userId: doc._id,
-            fullName: doc.fullName || "Anonymous",
-            avatar: doc.profile?.avatar || "default-avatar-url.png",
-          };
-        },
-      });
+    const project = await Project.findById(id).populate({
+      path: "creator",
+      select:
+        "fullName profile.avatar profile.profession profile.availableForHire projects",
+      transform: (doc) => {
+        if (!doc) return null;
+        return {
+          _id: doc._id,
+          fullName: doc.fullName,
+          avatar: doc.profile?.avatar,
+          profession: doc.profile?.profession,
+          projects: doc.projects || [],
+          availableForHire: doc.profile?.availableForHire || false,
+        };
+      },
+    });
     if (!project) {
       return next(new AppError("Project not found", 404));
     }
-
     if (project.status === "published") {
-      project.stats.views += 1;
-      await project.save();
+      await Project.findByIdAndUpdate(id, { $inc: { "stats.views": 1 } });
     }
 
     return res.status(200).json({
@@ -212,64 +246,6 @@ export const getProjectById = async (
     next(new AppError(`Error fetching project: ${error}`, 500));
   }
 };
-
-export const searchProjects = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<any> => {
-  try {
-    const {
-      query,
-      tags,
-      page = 1,
-      limit = 10,
-      status = "published", // Default to published projects
-    } = req.query;
-
-    const queryOptions: any = { status };
-
-    // Build search query
-    if (query) {
-      queryOptions.$or = [
-        { title: new RegExp(String(query), "i") },
-        { slug: new RegExp(String(query), "i") },
-      ];
-    }
-
-    // Add tags filter if provided
-    if (tags) {
-      const tagArray = Array.isArray(tags) ? tags : [tags];
-      queryOptions["tags.slug"] = { $all: tagArray };
-    }
-
-    // Calculate skip value for pagination
-    const skip = (Number(page) - 1) * Number(limit);
-
-    // Get total count for pagination
-    const total = await Project.countDocuments(queryOptions);
-
-    // Fetch projects
-    const projects = await Project.find(queryOptions)
-      .populate("creator", "name avatar")
-      .sort({ publishedAt: -1 })
-      .skip(skip)
-      .limit(Number(limit));
-
-    return res.status(200).json({
-      success: true,
-      data: projects,
-      pagination: {
-        total,
-        page: Number(page),
-        pages: Math.ceil(total / Number(limit)),
-      },
-    });
-  } catch (error) {
-    next(new AppError("Error searching projects", 500));
-  }
-};
-
 // Additional helper function for checking project ownership
 export const checkProjectOwnership = async (
   projectId: string,

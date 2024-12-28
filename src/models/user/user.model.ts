@@ -1,10 +1,9 @@
-// models/User.ts
-import { Schema, model, Document } from "mongoose";
-import {  Profile, Social, UserDocument } from "../../types/user";
+import { Schema, model } from "mongoose";
+import { Profile, Social, UserDocument } from "../../types/user";
 import bcrypt from "bcrypt";
 import { Model } from "mongoose";
 
-const socialSchema = new Schema<Social>(
+const SocialSchema = new Schema<Social>(
   {
     facebook: { type: String },
     twitter: { type: String },
@@ -15,43 +14,26 @@ const socialSchema = new Schema<Social>(
   { _id: false, versionKey: false }
 );
 
-// Define Profile schema
-const profileSchema = new Schema<Profile>(
+const ProfileSchema = new Schema<Profile>(
   {
     bio: { type: String },
     availableForHire: { type: Boolean },
     avatar: { type: String },
     cover: { type: String },
-    followers: {
-      type: [{ type: Schema.Types.ObjectId, ref: "User" }],
-      default: [],
-    },
-    following: {
-      type: [{ type: Schema.Types.ObjectId, ref: "User" }],
-      default: [],
-    },
-    Appreciations: {
-      type: [{ type: Schema.Types.ObjectId, ref: "Project" }],
-      default: [],
-    },
-    bookmarks: {
-      type: [{ type: Schema.Types.ObjectId, ref: "Project" }],
-      default: [],
-    },
     website: { type: String },
     profession: { type: String },
-    social: socialSchema,
+    social: SocialSchema,
   },
   { _id: false, versionKey: false }
 );
 
 // Define User schema with `password` and required fields
-const userSchema = new Schema<UserDocument>(
+const UserSchema = new Schema<UserDocument>(
   {
     email: { type: String, required: true, unique: true },
     fullName: { type: String, required: true },
-    password: { type: String, select: false }, // Password with select: false to exclude from queries by default
-    profile: profileSchema,
+    password: { type: String, select: false },
+    profile: ProfileSchema,
     projects: {
       type: [{ type: Schema.Types.ObjectId, ref: "Project" }],
       default: [],
@@ -60,8 +42,12 @@ const userSchema = new Schema<UserDocument>(
   { timestamps: true, versionKey: false }
 );
 
+// Indexes for fast retrieval
+UserSchema.index({ email: 1 }, { unique: true }); // Index on email for fast lookups and uniqueness
+UserSchema.index({ fullName: 1 }); // Index on fullName for fast lookups when searching by name
+
 // Password hashing middleware before saving
-userSchema.pre<UserDocument>("save", async function (next) {
+UserSchema.pre<UserDocument>("save", async function (next) {
   if (!this.isModified("password")) return next();
   if (this.password) {
     const salt = await bcrypt.genSalt(10);
@@ -69,11 +55,14 @@ userSchema.pre<UserDocument>("save", async function (next) {
   }
   next();
 });
+
 // Password validation method
-userSchema.methods.comparePassword = async function (
+UserSchema.methods.comparePassword = async function (
   enteredPassword: string
 ): Promise<boolean> {
   return await bcrypt.compare(enteredPassword, this.password);
 };
-const User: Model<UserDocument> = model<UserDocument>("User", userSchema);
+
+const User: Model<UserDocument> = model<UserDocument>("User", UserSchema);
+
 export default User;

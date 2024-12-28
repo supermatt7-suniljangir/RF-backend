@@ -28,8 +28,8 @@ export const createRateLimiter = ({
 // Predefined rate limit configurations
 export const limiters = {
   auth: createRateLimiter({
-    windowMs: 0 * 60 * 1000, // 15 minutes
-    max: 50, // 5 attempts
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // 5 attempts
     message: "Too many login attempts, please try again later",
   }),
 
@@ -37,7 +37,7 @@ export const limiters = {
 
   intense: createRateLimiter({
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: 500, // more restrictive
+    max: 50, // more restrictive
     message: "Hourly request limit exceeded",
   }),
   search: createRateLimiter({

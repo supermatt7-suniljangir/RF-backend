@@ -3,7 +3,6 @@ import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../config/configURLs";
 import { JwtPayload } from "../types/jwt-payload";
 import { AppError } from "./error";
-import { logoutUser } from "../controllers/user.controller";
 // Optional auth middleware that sets req.user if token exists but doesn't block if no token
 export const optionalAuth = (
   req: Request,
@@ -11,7 +10,6 @@ export const optionalAuth = (
   next: NextFunction
 ): void => {
   const token = req.cookies.auth_token;
-
   if (!token) {
     // No token, but that's okay - continue as unauthenticated
     return next();
@@ -22,7 +20,6 @@ export const optionalAuth = (
     req.user = decoded;
     next();
   } catch (error) {
-    // Invalid token, clear it but still continue
     res.clearCookie("auth_token", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

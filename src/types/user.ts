@@ -17,14 +17,10 @@ export interface Profile {
   bio?: string;
   avatar?: string;
   cover?: string;
-  followers?: Types.ObjectId[];//baad me kadi karsya tem milsi jnaa
-  following?: Types.ObjectId[];//baad me kadi karsya tem milsi jnaa
   website?: string;
   profession?: string;
   availableForHire?: boolean;
   social?: Social;
-  Appreciations?:Types.ObjectId[];
-  bookmarks?:Types.ObjectId[];
 }
 
 // User interface
