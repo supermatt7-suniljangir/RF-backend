@@ -19,7 +19,7 @@ router.get("/", limiters.standard, getProjects);
 router.get("/:id", limiters.standard, optionalAuth, getProjectById);
 
 // Protected routes with more restrictive rate limiting
-router.post("/project", limiters.intense, auth, validateProject, createProject);
+router.post("/", limiters.intense, auth, validateProject, createProject);
 router.put("/:id", limiters.intense, auth, validateProject, updateProject);
 
 // User project routes with different rate limits

@@ -25,7 +25,7 @@ export interface ILike {
 export interface IBookmark {
   _id?: Types.ObjectId;
   userId: Types.ObjectId;
-  project: Types.ObjectId;
+  projectId: Types.ObjectId;
   createdAt: Date;
 }
 

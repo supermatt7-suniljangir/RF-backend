@@ -13,7 +13,6 @@ export interface Imedia {
   url: string;
 }
 
-
 export interface IStats {
   views: number;
   likes: number;
@@ -46,8 +45,8 @@ export interface ProjectType {
   shortDescription: string;
   thumbnail: string;
   media: Imedia[];
-  creator: MiniUser; // User ID
-  collaborators?: string[]; // Array of user IDs
+  creator: Types.ObjectId; // User ID
+  collaborators?: Types.ObjectId[]; // Array of user IDs
   tags: string[];
   tools: ITools[];
   category: string;
@@ -81,8 +80,6 @@ export interface ProjectDocument extends Document {
   projectUrl?: string;
   copyright: ICopyright;
 }
-
-
 
 // import { Types } from "mongoose";
 // import { MiniUser, UserType } from "./user";

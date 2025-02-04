@@ -8,6 +8,8 @@ import uploadRoutes from "./routes/uploaderRoutes";
 import searchRoutes from "./routes/serachRoutes";
 import commentsRoutes from "./routes/commentsRoutes";
 import likesRoutes from "./routes/likesRoutes";
+import bookmarksRoutes from "./routes/bookmarksRoutes";
+import toolsRoutes from "./routes/toolsRoutes";
 import ProjectRoutes from "./routes/projectRoutes";
 import { PORT } from "./config/configURLs";
 import { connectDB, disconnectDB } from "./config/db";
@@ -89,6 +91,8 @@ app.use("/api/upload", uploadRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/comments", commentsRoutes);
 app.use("/api/likes", likesRoutes);
+app.use("/api/tools", toolsRoutes);
+app.use("/api/bookmarks", bookmarksRoutes);
 app.use(notFound);
 app.use(globalErrorHandler);
 

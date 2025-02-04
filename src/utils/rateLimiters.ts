@@ -33,23 +33,31 @@ export const limiters = {
     message: "Too many login attempts, please try again later",
   }),
 
-  standard: createRateLimiter(), 
+  standard: createRateLimiter(),
 
   intense: createRateLimiter({
-    windowMs: 60 * 60 * 1000, // 1 hour
-    max: 50, // more restrictive
+    windowMs: 15 * 60 * 1000,
+    max: 50,
     message: "Hourly request limit exceeded",
   }),
   search: createRateLimiter({
-    windowMs: 10 * 60 * 1000, // 15 minutes window
-    max: 100, // 100 searches per 15 minutes
-    message: "Too many search requests, please refine your search or try again later",
+    windowMs: 10 * 60 * 1000,
+    max: 100,
+    message:
+      "Too many search requests, please refine your search or try again later",
   }),
 
   // More intensive search limiter for complex or resource-heavy searches
   advancedSearch: createRateLimiter({
     windowMs: 30 * 60 * 1000, // 30 minutes window
     max: 50, // 50 advanced searches per 30 minutes
-    message: "Advanced search limit reached. Please wait before performing more complex searches.",
+    message:
+      "Advanced search limit reached. Please wait before performing more complex searches.",
+  }),
+
+ dev: createRateLimiter({
+    windowMs: 1 * 60 * 1000,
+    max: 500,
+    message: "Too many requests, please try again later",
   }),
 };

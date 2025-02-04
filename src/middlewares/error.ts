@@ -12,7 +12,7 @@ export const notFound = (req: Request, res: Response, next: NextFunction) => {
 export class AppError extends Error {
   statusCode: number;
   isOperational: boolean;
-  
+
   constructor(message: string, statusCode: number) {
     super(message);
     this.statusCode = statusCode;
@@ -36,6 +36,7 @@ export const globalErrorHandler = (
   res.status(err.statusCode).json({
     status: err.statusCode >= 400 && err.statusCode < 500 ? "fail" : "error",
     message: err.message,
+    success: false,
     ...(process.env.NODE_ENV !== "production" && { stack: err.stack }), // Include stack trace in dev mode
   });
 };

@@ -13,7 +13,7 @@ const router = express.Router();
 router.post("/:projectId", limiters.intense, auth, addProjectComment);
 
 // Get all comments for a project
-router.get("/:projectId", limiters.intense, getAllComments);
+router.get("/:projectId", limiters.standard, getAllComments);
 
 // Delete a comment
 router.delete("/:projectId/:commentId", limiters.intense, auth, deleteComment);

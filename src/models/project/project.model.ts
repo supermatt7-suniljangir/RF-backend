@@ -2,11 +2,6 @@ import { Schema, model, Document, Types } from "mongoose";
 import { ITools, ProjectDocument } from "../../types/project";
 import { title } from "process";
 
-const ToolSchema = new Schema<ITools>({
-  name: { type: String, required: true },
-  icon: String,
-});
-
 const ProjectSchema = new Schema<ProjectDocument>(
   {
     title: { type: String, required: true },
@@ -34,7 +29,7 @@ const ProjectSchema = new Schema<ProjectDocument>(
     creator: { type: Schema.Types.ObjectId, ref: "User", required: true },
     collaborators: [{ type: Schema.Types.ObjectId, ref: "User" }],
     tags: [{ type: String }],
-    tools: [ToolSchema],
+    tools: [{ type: Schema.Types.ObjectId, ref: "Tool" }], // Reference the Tool model
     category: { type: String },
     stats: {
       views: { type: Number, default: 0 },

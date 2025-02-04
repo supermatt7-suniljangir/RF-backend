@@ -90,7 +90,7 @@ export const hasUserLikedProject = async (
   next: NextFunction
 ): Promise<any> => {
   const { projectId } = req.params; // Get projectId from params
-  const userId = req.user!._id; // Extract userId from the logged-in user's data
+  const userId = req.user?._id; // Extract userId from the logged-in user's data
 
   // If userId is not found or undefined, return false (not logged in)
   if (!userId) {

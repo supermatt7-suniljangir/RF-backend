@@ -9,8 +9,8 @@ import { auth, optionalAuth } from "../middlewares/auth";
 
 const router = express.Router();
 
-router.put("/toggle/:projectId", limiters.intense, auth, toggleLikeProject);
-router.get("/:projectId", limiters.intense, fetchProjectLikes);
-router.get("/check/:projectId", limiters.intense, optionalAuth, hasUserLikedProject);
+router.put("/toggle/:projectId", limiters.dev, auth, toggleLikeProject);
+router.get("/:projectId", limiters.dev, fetchProjectLikes);
+router.get("/check/:projectId", limiters.dev, optionalAuth, hasUserLikedProject);
 
 export default router;

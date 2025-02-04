@@ -230,6 +230,7 @@ class ProjectSearchUtility {
           stats: 1,
           featured: 1,
           publishedAt: 1,
+          collaborators: 1,
           status: 1,
           creator: {
             _id: { $toString: "$creatorDetails._id" },
