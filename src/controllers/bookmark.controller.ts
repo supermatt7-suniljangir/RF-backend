@@ -60,11 +60,9 @@ class BookmarkController {
       res
         .status(201)
         .json(success({ data: true, message: "Bookmark added" }));
-      return;
     } catch (error) {
       logger.error(`Error toggling bookmark: ${error}`);
       next(new AppError("Error toggling bookmark", 500));
-      return;
     }
   }
 
@@ -97,7 +95,6 @@ class BookmarkController {
         res
           .status(200)
           .json(success({ data: [], message: "No bookmarks found" }));
-        return;
       }
 
       const transformedBookmarks = bookmarks
@@ -127,11 +124,9 @@ class BookmarkController {
           message: "Bookmarks fetched",
         })
       );
-      return;
     } catch (error) {
       logger.error(`Error fetching bookmarks: ${error}`);
       next(new AppError("Error fetching bookmarks", 500));
-      return;
     }
   }
 
@@ -174,11 +169,9 @@ class BookmarkController {
             : "User has not bookmarked the project",
         })
       );
-      return;
     } catch (error) {
       logger.error(`Error checking bookmark status: ${error}`);
       next(new AppError("Error checking bookmark status", 500));
-      return;
     }
   } 
 }

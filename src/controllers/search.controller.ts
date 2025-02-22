@@ -210,124 +210,109 @@ class SearchController {
     return pipeline;
   }
 
-  public searchProjects = asyncHandler(
-    async (
-      req: Request,
-      res: Response,
-      next: NextFunction
-    ): Promise<void | Response> => {
-      try {
-        const params = req.query as ProjectQueryParams;
-        const { pageNumber, limitNumber, skip } = this.normalizePagination(
-          { page: params.page, limit: params.limit },
-          20,
-          100
-        );
+  public async searchProjects(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const params = req.query as ProjectQueryParams;
+      const { pageNumber, limitNumber, skip } = this.normalizePagination(
+        { page: params.page, limit: params.limit },
+        20,
+        100
+      );
 
-        const matchQuery = this.buildProjectSearchQuery(params);
-        // if (!params.query && !params.category && !params.tag) {
-        //   matchQuery.featured = true;
-        // }
+      const matchQuery = this.buildProjectSearchQuery(params);
 
-        const [countResult, projects] = await Promise.all([
-          Project.aggregate([
-            ...this.buildProjectAggregationPipeline(matchQuery, 0, 10),
-            { $count: "totalProjects" },
-          ]),
-          Project.aggregate(
-            this.buildProjectAggregationPipeline(
-              matchQuery,
-              skip,
-              limitNumber,
-              params.sortBy,
-              params.sortOrder
-            )
-          ),
-        ]);
+      const [countResult, projects] = await Promise.all([
+        Project.aggregate([
+          ...this.buildProjectAggregationPipeline(matchQuery, 0, 10),
+          { $count: "totalProjects" },
+        ]),
+        Project.aggregate(
+          this.buildProjectAggregationPipeline(
+            matchQuery,
+            skip,
+            limitNumber,
+            params.sortBy,
+            params.sortOrder
+          )
+        ),
+      ]);
 
-        const totalProjects = countResult[0]?.totalProjects || 0;
-        const response = this.buildPaginationResponse(
-          projects,
-          totalProjects,
-          pageNumber,
-          limitNumber
-        );
-        return res.status(200).json(
-          success({
-            data: response,
-            message: projects.length
-              ? "Projects found successfully"
-              : "No projects found",
-          })
-        );
-      } catch (error) {
-        logger.error("Error searching projects:", error);
-        return next(new AppError("Error while searching projects", 500));
-      }
+      const totalProjects = countResult[0]?.totalProjects || 0;
+      const response = this.buildPaginationResponse(
+        projects,
+        totalProjects,
+        pageNumber,
+        limitNumber
+      );
+
+      res.status(200).json(
+        success({
+          data: response,
+          message: projects.length
+            ? "Projects found successfully"
+            : "No projects found",
+        })
+      );
+    } catch (error) {
+      logger.error("Error searching projects:", error);
+      next(new AppError("Error while searching projects", 500));
     }
-  ) as RequestHandler;
+  }
 
-  public searchUsers = asyncHandler(
-    async (
-      req: Request,
-      res: Response,
-      next: NextFunction
-    ): Promise<void | Response> => {
-      try {
-        const { query, page, limit, sortBy, sortOrder, filter } =
-          req.query as UserQueryParams;
+  public async searchUsers(req: Request, res: Response, next: NextFunction): Promise<void> {
+    const { query, page, limit, sortBy, sortOrder, filter } =
+      req.query as UserQueryParams;
 
-        if (!query || typeof query !== "string" || query.trim() === "") {
-          return next(new AppError("Invalid search query", 400));
-        }
-
-        const { pageNumber, limitNumber, skip } = this.normalizePagination(
-          { page, limit },
-          20,
-          100
-        );
-
-        const searchQuery = query.trim();
-
-        const [countResult, users] = await Promise.all([
-          User.aggregate([
-            ...this.buildUserSearchPipeline(searchQuery, 0, limitNumber),
-            { $count: "totalUsers" },
-          ]),
-          User.aggregate<MiniUser>(
-            this.buildUserSearchPipeline(
-              searchQuery,
-              skip,
-              limitNumber,
-              sortBy,
-              sortOrder,
-              filter as "featured" | "isAvailableForHire"
-            )
-          ),
-        ]);
-
-        const totalUsers = countResult[0]?.totalUsers || 0;
-        const response = this.buildPaginationResponse(
-          users,
-          totalUsers,
-          pageNumber,
-          limitNumber
-        );
-
-        return res.status(200).json(
-          success({
-            data: response,
-            message: users.length
-              ? "Users found successfully"
-              : "No users found",
-          })
-        );
-      } catch (error) {
-        logger.error("Error searching users:", error);
-        return next(new AppError("Error while searching users", 500));
-      }
+    if (!query || typeof query !== "string" || query.trim() === "") {
+      next(new AppError("Invalid search query", 400));
+      return;
     }
-  ) as RequestHandler;
+
+    try {
+      const { pageNumber, limitNumber, skip } = this.normalizePagination(
+        { page, limit },
+        20,
+        100
+      );
+
+      const searchQuery = query.trim();
+
+      const [countResult, users] = await Promise.all([
+        User.aggregate([
+          ...this.buildUserSearchPipeline(searchQuery, 0, limitNumber),
+          { $count: "totalUsers" },
+        ]),
+        User.aggregate<MiniUser>(
+          this.buildUserSearchPipeline(
+            searchQuery,
+            skip,
+            limitNumber,
+            sortBy,
+            sortOrder,
+            filter as "featured" | "isAvailableForHire"
+          )
+        ),
+      ]);
+
+      const totalUsers = countResult[0]?.totalUsers || 0;
+      const response = this.buildPaginationResponse(
+        users,
+        totalUsers,
+        pageNumber,
+        limitNumber
+      );
+
+      res.status(200).json(
+        success({
+          data: response,
+          message: users.length ? "Users found successfully" : "No users found",
+        })
+      );
+    } catch (error) {
+      logger.error("Error searching users:", error);
+      next(new AppError("Error while searching users", 500));
+    }
+  }
 }
 
 export default SearchController;
