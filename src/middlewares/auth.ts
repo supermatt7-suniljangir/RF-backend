@@ -2,7 +2,8 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../config/configURLs";
 import { JwtPayload } from "../types/jwt-payload";
-import { AppError } from "./error";
+import logger from "../logs/logger";
+import { AppError } from "../utils/responseTypes";
 // Optional auth middleware that sets req.user if token exists but doesn't block if no token
 export const optionalAuth = (
   req: Request,
@@ -18,8 +19,10 @@ export const optionalAuth = (
   try {
     const decoded = jwt.verify(token, JWT_SECRET!) as JwtPayload;
     req.user = decoded;
+    logger.info("auth middleware - user authenticated");
     next();
-  } catch (error) {
+  } catch (error: any) {
+    logger.error(`auth middleware - error verifying token ${error.message}`);
     res.clearCookie("auth_token", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -34,17 +37,20 @@ export const auth = (req: Request, res: Response, next: NextFunction): void => {
   const token = req.cookies.auth_token;
   if (!token) {
     res.status(403);
-    throw new Error("Unauthorized - No token provided");
+    next(new AppError("Authentication required", 403));
   }
+  logger.info("auth middleware - verifying token", token);
   try {
     const decoded = jwt.verify(token, JWT_SECRET!) as JwtPayload;
     if (!decoded) {
-      next(new AppError("invalid jwt", 401));
+      return next(new AppError("invalid jwt", 401));
     }
+
     req.user = decoded;
     next();
   } catch (error: any) {
-    next(new AppError(error.message, 401));
+    logger.error(`auth middleware - error verifying token`, error.message);
+    return next(new AppError(error.message, 401));
   }
 };
 
@@ -52,11 +58,11 @@ export const auth = (req: Request, res: Response, next: NextFunction): void => {
 export const checkRole = (roles: string[]) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.user || !req.user.role) {
-      throw new Error("Authentication required or no role provided");
+      return next(new AppError("Authentication required", 401));
     }
 
     if (!roles.includes(req.user.role)) {
-      throw new Error("Forbidden - Insufficient permissions");
+      return next(new AppError("insufficient permissions, action denied", 403));
     }
     next();
   };

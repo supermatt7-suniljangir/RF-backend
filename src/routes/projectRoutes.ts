@@ -1,29 +1,23 @@
 import { Router } from "express";
 import { limiters } from "../utils/rateLimiters";
-import {
-  createProject,
-  getProjectById,
-  getProjects,
-  getProjectsByUser,
-  updateProject,
-} from "../controllers/project.controller";
+import ProjectController from "../controllers/project.controller";
 import { auth, optionalAuth } from "../middlewares/auth";
-import { validateProject } from "../validators/ProjectValidation";
+import { validateProject } from "../validators/projectValidation";
 
 const router = Router();
 
+const projectController = new ProjectController();
 // Public routes with standard rate limiting
-router.get("/", limiters.standard, getProjects);
+router.get("/", limiters.standard, projectController.getProjects);
 
 // Specific project routes
-router.get("/:id", limiters.standard, optionalAuth, getProjectById);
+router.get("/:id", limiters.standard, optionalAuth, projectController.getProjectById);
 
 // Protected routes with more restrictive rate limiting
-router.post("/", limiters.intense, auth, validateProject, createProject);
-router.put("/:id", limiters.intense, auth, validateProject, updateProject);
+router.post("/", auth, validateProject, projectController.createProject);
+router.put("/:id", limiters.intense, auth, validateProject, projectController.updateProject);
 
 // User project routes with different rate limits
-router.get("/user/personal", limiters.standard, auth, getProjectsByUser);
-router.get("/user/:userId", limiters.standard, optionalAuth, getProjectsByUser);
+router.get("/:userId/user", limiters.standard, optionalAuth, projectController.getProjectsByUser);
 
 export default router;

@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, Request, Response, RequestHandler } from "express";
 import asyncHandler from "../middlewares/asyncHanlder";
 import {
   PaginationMetadata,
@@ -9,22 +9,12 @@ import mongoose from "mongoose";
 import User from "../models/user/user.model";
 import Project from "../models/project/project.model";
 import { MiniUser } from "../types/user";
-import { AppError } from "../middlewares/error";
+import { AppError, success } from "../utils/responseTypes";
+import logger from "../logs/logger";
 
-// Generic pagination utility
-interface PaginationOptions {
-  page?: string;
-  limit?: string;
-}
-
-interface SearchResult<T> {
-  data: T[];
-  pagination: PaginationMetadata;
-}
-
-class SearchUtility {
-  static normalizePagination(
-    options: PaginationOptions = {},
+class SearchController {
+  private normalizePagination(
+    options: { page?: string; limit?: string } = {},
     defaultLimit = 20,
     maxLimit = 100
   ): { pageNumber: number; limitNumber: number; skip: number } {
@@ -39,15 +29,12 @@ class SearchUtility {
     return { pageNumber, limitNumber, skip };
   }
 
-  /**
-   * Builds a standard response with pagination
-   */
-  static buildPaginationResponse<T>(
+  private buildPaginationResponse<T>(
     data: T[],
     total: number,
     page: number,
     limit: number
-  ): SearchResult<T> {
+  ): { data: T[]; pagination: PaginationMetadata } {
     const totalPages = Math.ceil(total / limit);
 
     return {
@@ -62,10 +49,8 @@ class SearchUtility {
       },
     };
   }
-}
 
-class UserSearchUtility {
-  static buildUserSearchPipeline(
+  private buildUserSearchPipeline(
     searchQuery?: string,
     skip?: number,
     limit?: number,
@@ -76,23 +61,13 @@ class UserSearchUtility {
     const matchStage: any = {
       $match: {
         $or: [
-          {
-            fullName: {
-              $regex: searchQuery,
-              $options: "i",
-            },
-          },
-          {
-            "profile.profession": {
-              $regex: searchQuery,
-              $options: "i",
-            },
-          },
+          { fullName: { $regex: searchQuery, $options: "i" } },
+          { "profile.profession": { $regex: searchQuery, $options: "i" } },
         ],
       },
     };
 
-    if (filter === "isAvailableForHire" && filter !== undefined) {
+    if (filter === "isAvailableForHire") {
       matchStage.$match["profile.availableForHire"] = true;
     }
 
@@ -103,50 +78,36 @@ class UserSearchUtility {
     const sortField = sortMapping[sortBy] || "fullName";
 
     return [
-      // First stage: Match users
       matchStage,
-      // Project the necessary fields
       {
         $project: {
           _id: { $toString: "$_id" },
           fullName: 1,
-          avatar: "$profile.avatar",
-          profession: "$profile.profession",
-          projects: {
-            $map: {
-              input: "$projects",
-              as: "project",
-              in: { $toString: "$$project" },
-            },
+          email: 1,
+          profile: {
+            avatar: 1,
+            profession: 1,
+            availableForHire: 1,
           },
-          availableForHire: "$profile.availableForHire",
         },
       },
-
-      // Dynamic sorting stage
-      {
-        $sort: { [sortField]: sortOrder === "asc" ? 1 : -1 },
-      },
+      { $sort: { [sortField]: sortOrder === "asc" ? 1 : -1 } },
       { $skip: skip },
       { $limit: limit },
     ];
   }
-}
 
-class ProjectSearchUtility {
-  static buildSearchQuery(
+  private buildProjectSearchQuery(
     params: ProjectQueryParams
   ): mongoose.FilterQuery<any> {
     const { query, category, tag, status = "published", filter } = params;
-
     const baseConditions: mongoose.FilterQuery<any> = { status };
-
     const searchConditions: mongoose.FilterQuery<any>[] = [];
 
-    // Filter logic
     if (filter === "featured") {
       baseConditions.featured = true;
     }
+
     if (query && category) {
       searchConditions.push({
         $and: [
@@ -187,14 +148,13 @@ class ProjectSearchUtility {
     };
   }
 
-  static buildAggregationPipeline(
+  private buildProjectAggregationPipeline(
     matchQuery: mongoose.FilterQuery<any>,
     skip?: number,
     limit?: number,
     sortBy = "publishedAt",
     sortOrder: "asc" | "desc" = "desc"
   ): mongoose.PipelineStage[] {
-    // Mapping of sortBy to actual fields
     const sortMapping: { [key: string]: string } = {
       title: "title",
       likes: "stats.likes",
@@ -216,10 +176,7 @@ class ProjectSearchUtility {
         },
       },
       {
-        $unwind: {
-          path: "$creatorDetails",
-          preserveNullAndEmptyArrays: true,
-        },
+        $unwind: { path: "$creatorDetails", preserveNullAndEmptyArrays: true },
       },
       {
         $project: {
@@ -235,16 +192,12 @@ class ProjectSearchUtility {
           creator: {
             _id: { $toString: "$creatorDetails._id" },
             fullName: "$creatorDetails.fullName",
-            avatar: "$creatorDetails.profile.avatar",
-            profession: "$creatorDetails.profile.profession",
-            projects: {
-              $map: {
-                input: "$creatorDetails.projects",
-                as: "project",
-                in: { $toString: "$$project" },
-              },
+            email: "$creatorDetails.email",
+            profile: {
+              avatar: "$creatorDetails.profile.avatar",
+              profession: "$creatorDetails.profile.profession",
+              availableForHire: "$creatorDetails.profile.availableForHire",
             },
-            availableForHire: "$creatorDetails.profile.availableForHire",
           },
         },
       },
@@ -256,133 +209,125 @@ class ProjectSearchUtility {
 
     return pipeline;
   }
+
+  public searchProjects = asyncHandler(
+    async (
+      req: Request,
+      res: Response,
+      next: NextFunction
+    ): Promise<void | Response> => {
+      try {
+        const params = req.query as ProjectQueryParams;
+        const { pageNumber, limitNumber, skip } = this.normalizePagination(
+          { page: params.page, limit: params.limit },
+          20,
+          100
+        );
+
+        const matchQuery = this.buildProjectSearchQuery(params);
+        // if (!params.query && !params.category && !params.tag) {
+        //   matchQuery.featured = true;
+        // }
+
+        const [countResult, projects] = await Promise.all([
+          Project.aggregate([
+            ...this.buildProjectAggregationPipeline(matchQuery, 0, 10),
+            { $count: "totalProjects" },
+          ]),
+          Project.aggregate(
+            this.buildProjectAggregationPipeline(
+              matchQuery,
+              skip,
+              limitNumber,
+              params.sortBy,
+              params.sortOrder
+            )
+          ),
+        ]);
+
+        const totalProjects = countResult[0]?.totalProjects || 0;
+        const response = this.buildPaginationResponse(
+          projects,
+          totalProjects,
+          pageNumber,
+          limitNumber
+        );
+        return res.status(200).json(
+          success({
+            data: response,
+            message: projects.length
+              ? "Projects found successfully"
+              : "No projects found",
+          })
+        );
+      } catch (error) {
+        logger.error("Error searching projects:", error);
+        return next(new AppError("Error while searching projects", 500));
+      }
+    }
+  ) as RequestHandler;
+
+  public searchUsers = asyncHandler(
+    async (
+      req: Request,
+      res: Response,
+      next: NextFunction
+    ): Promise<void | Response> => {
+      try {
+        const { query, page, limit, sortBy, sortOrder, filter } =
+          req.query as UserQueryParams;
+
+        if (!query || typeof query !== "string" || query.trim() === "") {
+          return next(new AppError("Invalid search query", 400));
+        }
+
+        const { pageNumber, limitNumber, skip } = this.normalizePagination(
+          { page, limit },
+          20,
+          100
+        );
+
+        const searchQuery = query.trim();
+
+        const [countResult, users] = await Promise.all([
+          User.aggregate([
+            ...this.buildUserSearchPipeline(searchQuery, 0, limitNumber),
+            { $count: "totalUsers" },
+          ]),
+          User.aggregate<MiniUser>(
+            this.buildUserSearchPipeline(
+              searchQuery,
+              skip,
+              limitNumber,
+              sortBy,
+              sortOrder,
+              filter as "featured" | "isAvailableForHire"
+            )
+          ),
+        ]);
+
+        const totalUsers = countResult[0]?.totalUsers || 0;
+        const response = this.buildPaginationResponse(
+          users,
+          totalUsers,
+          pageNumber,
+          limitNumber
+        );
+
+        return res.status(200).json(
+          success({
+            data: response,
+            message: users.length
+              ? "Users found successfully"
+              : "No users found",
+          })
+        );
+      } catch (error) {
+        logger.error("Error searching users:", error);
+        return next(new AppError("Error while searching users", 500));
+      }
+    }
+  ) as RequestHandler;
 }
 
-// Controller remains the same as in your previous implementation
-export const searchProjects = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const params = req.query as ProjectQueryParams;
-    const { pageNumber, limitNumber, skip } = SearchUtility.normalizePagination(
-      { page: params.page, limit: params.limit },
-      20,
-      100
-    );
-
-    const matchQuery = ProjectSearchUtility.buildSearchQuery(params);
-    // build with only featured field if no query is provided
-    if (!params.query && !params.category && !params.tag) {
-      matchQuery.featured = true;
-    }
-
-    try {
-      const [countResult, projects] = await Promise.all([
-        Project.aggregate([
-          ...ProjectSearchUtility.buildAggregationPipeline(matchQuery, 0, 10),
-          { $count: "totalProjects" },
-        ]),
-        Project.aggregate(
-          ProjectSearchUtility.buildAggregationPipeline(
-            matchQuery,
-            skip,
-            limitNumber,
-            params.sortBy,
-            params.sortOrder
-          )
-        ),
-      ]);
-
-      const totalProjects = countResult[0]?.totalProjects || 0;
-
-      const response = SearchUtility.buildPaginationResponse(
-        projects,
-        totalProjects,
-        pageNumber,
-        limitNumber
-      );
-
-      res.status(200).json({
-        message: projects.length
-          ? "Projects found successfully"
-          : "No projects found",
-        ...response,
-      });
-    } catch (error: any) {
-      return next(
-        new AppError("Error while searching projects" + error.message, 500)
-      );
-    }
-  }
-);
-
-// controllers
-// User Search Controller
-export const searchUsers = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const { query, page, limit, sortBy, sortOrder, filter } =
-      req.query as UserQueryParams;
-
-    // Validate query parameter
-    if (!query || typeof query !== "string" || query.trim() === "") {
-      return next(new AppError("Invalid search query", 400));
-    }
-
-    // Normalize pagination
-    const { pageNumber, limitNumber, skip } = SearchUtility.normalizePagination(
-      { page, limit },
-      20,
-      100
-    );
-
-    // Prepare the search query
-    const searchQuery = query.trim();
-
-    try {
-      // Execute aggregations
-      const [countResult, users] = await Promise.all([
-        User.aggregate([
-          ...UserSearchUtility.buildUserSearchPipeline(
-            searchQuery,
-            0,
-            limitNumber
-          ),
-          { $count: "totalUsers" },
-        ]),
-        User.aggregate<MiniUser>(
-          UserSearchUtility.buildUserSearchPipeline(
-            searchQuery,
-            skip,
-            limitNumber,
-            sortBy,
-            sortOrder,
-            filter as "featured" | "isAvailableForHire"
-          )
-        ),
-      ]);
-
-      // Get total users
-      const totalUsers = countResult[0]?.totalUsers || 0;
-
-      // Build and send response
-      const response = SearchUtility.buildPaginationResponse(
-        users,
-        totalUsers,
-        pageNumber,
-        limitNumber
-      );
-
-      res.status(200).json({
-        message: users.length ? "Users found successfully" : "No users found",
-        ...response,
-      });
-    } catch (error: any) {
-      return next(
-        new AppError("Error while searching users: " + error.message, 500)
-      );
-    }
-  }
-);
-
-export default {
-  searchUsers,
-  searchProjects,
-};
+export default SearchController;

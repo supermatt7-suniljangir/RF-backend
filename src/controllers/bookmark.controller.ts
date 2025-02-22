@@ -1,37 +1,46 @@
-import { Request, Response, NextFunction } from "express";
-import asyncHandler from "../middlewares/asyncHanlder";
-import { AppError } from "../middlewares/error";
+import { Request, Response, NextFunction, RequestHandler } from "express";
 import Project from "../models/project/project.model";
 import User from "../models/user/user.model";
-import Comment from "../models/others/comments.model";
-import { IComment } from "../types/others";
+import Bookmark from "../models/others/bookmark.model";
 import logger from "../logs/logger";
 import { UserType } from "../types/user";
-import Bookmark from "../models/others/bookmark.model";
+import { AppError, success } from "../utils/responseTypes";
 
-export const toggleBookmark = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+class BookmarkController {
+  // Toggle Bookmark
+  public toggleBookmark = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     const { projectId } = req.params;
+    if (!projectId) {
+      logger.error("Project ID not provided");
+      next(new AppError("Project ID not provided", 400));
+      return;
+    }
     const userId = req.user!._id;
 
+    // Check if the user exists
+    const user: UserType | null = await User.findById(
+      userId,
+      "fullName profile.avatar"
+    );
+    if (!user) {
+      logger.error(`User not found: ${userId}`);
+      next(new AppError("User not found", 404));
+      return;
+    }
+
+    // Check if the project exists
+    const project = await Project.findById(projectId);
+    if (!project) {
+      logger.error(`Project not found: ${projectId}`);
+      next(new AppError("Project not found", 404));
+      return;
+    }
+
     try {
-      // Check if the project exists
-      const project = await Project.findById(projectId);
-      if (!project) {
-        logger.error(`Project not found: ${projectId}`);
-        return next(new AppError("Project not found", 404));
-      }
-
-      // Check if the user exists
-      const user: UserType | null = await User.findById(
-        userId,
-        "fullName profile.avatar"
-      );
-      if (!user) {
-        logger.error(`User not found: ${userId}`);
-        return next(new AppError("User not found", 404));
-      }
-
       // Check if bookmark exists
       const bookmarkExists = await Bookmark.findOne({ userId, projectId });
 
@@ -39,124 +48,139 @@ export const toggleBookmark = asyncHandler(
         // Remove bookmark if it exists
         await Bookmark.deleteOne({ userId, projectId });
         logger.info(`Bookmark removed: User ${userId}, Project ${projectId}`);
-        return res
+        res
           .status(200)
-          .json({ message: "Bookmark removed", success: true });
+          .json(success({ data: true, message: "Bookmark removed" }));
+        return;
       }
 
       // Add new bookmark
       await Bookmark.create({ userId, projectId });
       logger.info(`Bookmark added: User ${userId}, Project ${projectId}`);
-      return res.status(201).json({ message: "Bookmark added", success: true });
+      res
+        .status(201)
+        .json(success({ data: true, message: "Bookmark added" }));
+      return;
     } catch (error) {
       logger.error(`Error toggling bookmark: ${error}`);
-      return next(new AppError("Error toggling bookmark", 500));
+      next(new AppError("Error toggling bookmark", 500));
+      return;
     }
   }
-);
 
-export const getUserBookmarks = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  // Get User Bookmarks
+  public getUserBookmarks = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     const userId = req.user!._id;
     try {
-      const bookmarks: any = await Bookmark.find({ userId })
+      if (!userId) {
+        next(new AppError("User not found", 404));
+        return;
+      }
+
+      const bookmarks = await Bookmark.find({ userId })
         .populate({
           path: "projectId",
           select: "title thumbnail stats category publishedAt status",
           populate: {
             path: "creator",
-            select: "_id fullName profile.avatar profile.profession",
+            select: "_id fullName profile.avatar profile.profession email profile.availableForHire",
           },
         })
         .lean();
 
       if (!bookmarks.length) {
-        return res.status(200).json({
-          success: true,
-          message: "No bookmarks found",
-          data: [],
-        });
+        logger.info("No bookmarks found");
+        res
+          .status(200)
+          .json(success({ data: [], message: "No bookmarks found" }));
+        return;
       }
 
-      const transformedBookmarks = bookmarks.map(
-        ({ projectId, ...rest }: { projectId: any; [key: string]: any }) => {
-          // Simplifying the project data and modifying the creator field
+      const transformedBookmarks = bookmarks
+        .map(({ projectId, ...rest }: { projectId: any; [key: string]: any }) => {
+          if (!projectId) return null;
           const project = {
             ...projectId,
-            creator: projectId.creator
+            creator: projectId?.creator
               ? {
                   _id: projectId.creator._id,
                   fullName: projectId.creator.fullName,
                   avatar: projectId.creator.profile.avatar,
                   profession: projectId.creator.profile.profession,
                 }
-              : null, // Handle the case where creator might be null
+              : null,
           };
-
           return {
             ...rest,
-            project, // Add the transformed project data
+            project,
           };
-        }
-      );
+        })
+        .filter((item: any) => item !== null);
 
-      res.status(200).json({
-        success: true,
-        data: transformedBookmarks,
-      });
+      res.status(200).json(
+        success({
+          data: transformedBookmarks,
+          message: "Bookmarks fetched",
+        })
+      );
+      return;
     } catch (error) {
       logger.error(`Error fetching bookmarks: ${error}`);
       next(new AppError("Error fetching bookmarks", 500));
+      return;
     }
   }
-);
 
-export const hasUserBookmarkedProject = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<any> => {
-  const { projectId } = req.params; // Get projectId from params
-  const userId = req.user?._id; // Extract userId from the logged-in user's data
-  // If userId is not found or undefined, return false (not logged in)
-  if (!userId) {
-    return res.status(200).json({
-      success: false,
-      message: "User not logged in",
-      data: false,
-    });
-  }
+  // Check if User has Bookmarked Project
+  public hasUserBookmarkedProject = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    const { projectId } = req.params;
+    const userId = req.user?._id;
 
-  // Validate if the user exists
-  const user = await User.findById(userId);
-  if (!user) {
-    return next(new AppError("User not found", 404)); // If user is not found, throw an error
-  }
+    if (!userId) {
+      res.status(200).json(
+        success({
+          data: false,
+          message: "User not logged in",
+        })
+      );
+      return;
+    }
 
-  try {
-    // Check if the user has bookmarked the project by looking for the userId in the bookmarks
-    const bookmark = await Bookmark.findOne({
-      userId, // Check if the bookmark belongs to the logged-in user
-      projectId, // Check if the bookmark is for the specific project
-    });
+    const user = await User.findById(userId);
+    if (!user) {
+      next(new AppError("User not found", 404));
+      return;
+    }
 
-    // If bookmark exists, return true, meaning the user has bookmarked the project
-    if (bookmark) {
-      return res.status(200).json({
-        success: true,
-        message: "User has bookmarked the project",
-        data: true,
+    try {
+      const bookmark = await Bookmark.findOne({
+        userId,
+        projectId,
       });
-    }
 
-    // If no bookmark found, return false, meaning the user has not bookmarked the project
-    return res.status(200).json({
-      success: false,
-      message: "User has not bookmarked the project",
-      data: false,
-    });
-  } catch (error) {
-    // Handle any unexpected errors
-    return next(new AppError("Error checking bookmark status", 500));
-  }
-};
+      res.status(200).json(
+        success({
+          data: !!bookmark,
+          message: bookmark
+            ? "User has bookmarked the project"
+            : "User has not bookmarked the project",
+        })
+      );
+      return;
+    } catch (error) {
+      logger.error(`Error checking bookmark status: ${error}`);
+      next(new AppError("Error checking bookmark status", 500));
+      return;
+    }
+  } 
+}
+
+export default BookmarkController;

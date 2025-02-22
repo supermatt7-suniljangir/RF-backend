@@ -1,7 +1,8 @@
 import User from "../models/user/user.model";
 import { OAuth2Client } from "google-auth-library";
-import {  UserDocument } from "../types/user";
-import { AppError } from "../middlewares/error";
+import { UserDocument } from "../types/user";
+import { AppError } from "../utils/responseTypes";
+import logger from "../logs/logger";
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID); // Your Google OAuth Client ID
 
@@ -13,9 +14,9 @@ const googleAuth = async (googleToken: string): Promise<UserDocument> => {
       idToken: googleToken,
       audience: process.env.GOOGLE_CLIENT_ID, // Your Google OAuth Client ID
     });
-
+   
     const payload = ticket.getPayload();
-
+    
     if (!payload) {
       throw new AppError("Invalid Google token", 401);
     }
@@ -40,7 +41,7 @@ const googleAuth = async (googleToken: string): Promise<UserDocument> => {
     }
     // For other errors, wrap them in an AppError
     throw new AppError(
-      error.message || "Google authentication failed", 
+      error.message || "Google authentication failed",
       error.status || 500
     );
   }

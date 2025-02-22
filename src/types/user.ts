@@ -25,6 +25,8 @@ export interface Profile {
 
 // User interface
 export interface UserType {
+  followersCount: number; // New field for followers count
+  followingCount: number; // New field for following count
   _id?: Types.ObjectId;
   email: string;
   fullName: string;
@@ -35,6 +37,8 @@ export interface UserType {
 
 export interface UserDocument extends Document {
   email: string;
+  followersCount: number; // New field for followers count
+  followingCount: number; // New field for following count
   fullName: string;
   profile?: Profile;
   password?: string;
@@ -55,11 +59,11 @@ export interface UserResponse {
 }
 
 export interface MiniUser {
-  _id: Types.ObjectId; 
+  _id: Types.ObjectId;
   fullName: string;
-  avatar?: string;
-  profession?: string;
-  followersCount?: number;
-  projects?: Types.ObjectId[];
-  availableForHire?: boolean;
+  email: string;
+  profile: {
+    avatar: string;
+    profession: string;
+  };
 }

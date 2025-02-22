@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { Request, Response, NextFunction } from "express";
+import { AppError, formValidationError } from "../utils/responseTypes";
 // Social Schema
 const SocialSchema = z.object({
   facebook: z.string().url("Invalid Facebook URL").optional(),
@@ -55,14 +56,12 @@ export const validateUser = async (
     next();
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        success: false,
-        errors: error.errors.map((e) => ({
-          field: e.path.join("."),
-          message: e.message,
-        })),
-      });
+      const validationErrors = error.errors.map((e) => ({
+        field: e.path.join("."),
+        message: e.message,
+      }));
+      return res.status(400).json(formValidationError(validationErrors));
     }
-    return res.status(500).json({ success: false, error: "Validation error" });
+    return next(new AppError("Validation error", 500));
   }
 };

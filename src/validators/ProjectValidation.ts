@@ -1,118 +1,77 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import { isValidObjectId } from "mongoose";
+import logger from "../logs/logger";
+import { AppError, formValidationError } from "../utils/responseTypes";
 
-// Custom regex patterns
+// Custom regex pattern for URLs
 const URL_PATTERN = /^https?:\/\/.+/i;
-const LICENSE_TYPES = [
-  "MIT",
-  "Apache-2.0",
-  "GPL-3.0",
-  "BSD-3-Clause",
-  "Custom",
-  "All Rights Reserved",
-] as const;
 
 // Helper function to validate MongoDB ObjectId
 const isValidMongoId = (value: string) => isValidObjectId(value);
 
-// Tool Schema
-const ToolSchema = z.object({
-  name: z.string().min(1).max(50),
-  icon: z.string().optional(),
-});
-
-// Media Zod Schema
+// Media Schema
 const MediaSchema = z.object({
-  type: z.enum(["image", "mp4"]), // type can only be "image" or "mp4"
-  url: z.string(), // URL is required and must be a string
-});
-
-// Thumbnail Schema
-const ThumbnailSchema = z.object({
-  url: z.string().url("Invalid thumbnail URL"),
-  alt: z.string().max(100),
-  width: z.number().int().positive(),
-  height: z.number().int().positive(),
+  type: z.enum(["image", "video"]),
+  url: z.string().url("Invalid media URL"),
+  order: z.number().int().min(0).optional(),
 });
 
 // Copyright Schema
 const CopyrightSchema = z.object({
-  license: z.enum(LICENSE_TYPES),
-  allowsDownload: z.boolean(),
-  commercialUse: z.boolean(),
+  license: z.string().min(1, "License is required"),
+  allowsDownload: z.boolean().default(false),
+  commercialUse: z.boolean().default(false),
 });
 
 // Main Project Schema
 const ProjectSchema = z.object({
-  title: z
-    .string()
-    .min(3, "Title must be at least 3 characters")
-    .max(100, "Title cannot exceed 100 characters")
-    .refine((val) => !val.includes("@"), "Title cannot contain @ symbol"),
-
-  description: z
-    .string()
-    .min(10, "Description must be at least 10 characters")
-    .max(500, "Description cannot exceed 500 characters"),
-
-  shortDescription: z
-    .string()
-    .min(10, "Short description must be at least 10 characters")
-    .max(160, "Short description cannot exceed 160 characters"),
-
-  thumbnail: ThumbnailSchema,
-
-  media: z.array(MediaSchema).max(10, "Maximum 10 media items allowed"),
-
+  title: z.string().min(3).max(100),
+  description: z.string().min(10),
+  shortDescription: z.string().max(160),
+  thumbnail: z.string().url("Invalid thumbnail URL"),
+  media: z.array(MediaSchema).max(10),
   creator: z.string().refine(isValidMongoId, "Invalid creator ID"),
-
   collaborators: z
     .array(z.string().refine(isValidMongoId, "Invalid collaborator ID"))
     .optional(),
-
-  tags: z
-    .array(z.string())
-    .min(1, "At least one tag is required")
-    .max(10, "Maximum 10 tags allowed"),
-
+  tags: z.array(z.string()).max(10).optional(),
   tools: z
-    .array(ToolSchema)
-    .min(1, "At least one tool is required")
-    .max(10, "Maximum 10 tools allowed"),
-
-  categories: z.string().min(1, "category can't be empty"),
-
-  status: z.enum(["draft", "published", "archived"]),
-
-  projectUrl: z.string().regex(URL_PATTERN, "Invalid project URL").optional(),
-
+    .array(z.string().refine(isValidMongoId, "Invalid tool ID"))
+    .optional(),
+  category: z.string().min(1, "Category is required"),
+  stats: z
+    .object({
+      views: z.number().int().default(0),
+      likes: z.number().int().default(0),
+      saves: z.number().int().default(0),
+      comments: z.number().int().default(0),
+    })
+    .optional(),
+  featured: z.boolean().default(false),
+  publishedAt: z.preprocess((val) => new Date(val as number), z.date()),
+  status: z.enum(["draft", "published"]).default("draft"),
   copyright: CopyrightSchema,
 });
 
-// Single validation middleware that handles both create and update
+// Middleware for validation
 export const validateProject = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<any> => {
   try {
-    // If it's an update (PATCH request), make all fields optional
-    const schema =
-      req.method === "PUT" ? ProjectSchema.partial() : ProjectSchema;
-
-    await schema.parseAsync(req.body);
+    await ProjectSchema.parseAsync(req.body);
     next();
   } catch (error) {
+    logger.error(error);
     if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        success: false,
-        errors: error.errors.map((e) => ({
-          field: e.path.join("."),
-          message: e.message,
-        })),
-      });
+      const validationErrors = error.errors.map((e) => ({
+        field: e.path.join("."),
+        message: e.message,
+      }));
+      return res.status(400).json(formValidationError(validationErrors));
     }
-    return res.status(500).json({ success: false, error: "Validation error" });
+    return next(new AppError("Validation error", 500));
   }
 };

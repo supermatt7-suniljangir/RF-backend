@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import { MONGO_URI } from "./configURLs";
 import logger from "../logs/logger";
-import { AppError } from "../middlewares/error";
+import { AppError } from "../utils/responseTypes";
 const connectDB = async () => {
   try {
     if (!MONGO_URI) {

@@ -1,24 +1,24 @@
 // src/routes/user.routes.ts
-import { Router } from "express";
+import { RequestHandler, Router } from "express";
 import { limiters } from "../utils/rateLimiters";
-import {
-  authUser,
-  getUserProfile,
-  registerUser,
-  logoutUser,
-  getUserById,
-  updateUserProfile,
-} from "../controllers/user.controller";
+import UserController from "../controllers/user.controller";
 import { auth } from "../middlewares/auth";
 import { validateUser } from "../validators/userValidation";
+import { validateAuth } from "../validators/authValidation";
 
 const router = Router();
-
-router.post("/auth", limiters.auth, authUser);
-router.post("/register", limiters.auth, validateUser, registerUser);
-router.get("/", limiters.standard, auth, getUserProfile);
-router.put("/", limiters.standard, auth, validateUser, updateUserProfile);
-router.get("/:id", limiters.standard, getUserById);
-router.post("/logout", limiters.standard, logoutUser);
+const userController = new UserController();
+router.post("/auth", limiters.auth, validateAuth, userController.authUser);
+router.post("/register", limiters.auth, validateUser, userController.registerUser);
+router.get("/profile", limiters.standard, auth, userController.getUserProfile);
+router.put(
+  "/profile",
+  limiters.standard,
+  auth,
+  validateUser,
+  userController.updateUserProfile
+);
+router.get("/:id", limiters.standard, userController.getUserById);
+router.post("/logout", limiters.standard, userController.logoutUser);
 
 export default router;

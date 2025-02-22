@@ -23,7 +23,6 @@ const ProjectSchema = new Schema<ProjectDocument>(
           type: String,
           required: true,
         },
-        order: { type: Number, default: 0 },
       },
     ],
     creator: { type: Schema.Types.ObjectId, ref: "User", required: true },
@@ -34,7 +33,6 @@ const ProjectSchema = new Schema<ProjectDocument>(
     stats: {
       views: { type: Number, default: 0 },
       likes: { type: Number, default: 0 },
-      saves: { type: Number, default: 0 },
       comments: { type: Number, default: 0 },
     },
     featured: { type: Boolean, default: false },
@@ -60,6 +58,7 @@ ProjectSchema.index({ featured: 1 }); // Index for filtering by featured status
 ProjectSchema.index({ tags: 1 }); // Index for searching projects by tags (array index)
 ProjectSchema.index({ title: 1 }); // Index for searching projects by title
 ProjectSchema.index({ categories: 1 }); // For category-based searches
+ProjectSchema.index({ creator: 1 }); // For creator
 // Export model
 const Project = model<ProjectDocument>("Project", ProjectSchema);
 export default Project;

@@ -34,10 +34,8 @@ const UserSchema = new Schema<UserDocument>(
     fullName: { type: String, required: true },
     password: { type: String, select: false },
     profile: ProfileSchema,
-    projects: {
-      type: [{ type: Schema.Types.ObjectId, ref: "Project" }],
-      default: [],
-    },
+    followersCount: { type: Number, default: 0 }, // New field for followers count
+    followingCount: { type: Number, default: 0 }, // New field for following count
   },
   { timestamps: true, versionKey: false }
 );
