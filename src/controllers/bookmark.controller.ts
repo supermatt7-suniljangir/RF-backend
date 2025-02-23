@@ -50,7 +50,7 @@ class BookmarkController {
         logger.info(`Bookmark removed: User ${userId}, Project ${projectId}`);
         res
           .status(200)
-          .json(success({ data: true, message: "Bookmark removed" }));
+          .json(success({ data: false, message: "Bookmark removed" }));
         return;
       }
 

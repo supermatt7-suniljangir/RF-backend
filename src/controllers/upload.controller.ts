@@ -36,11 +36,11 @@ class UploadController {
     return { uploadUrl, key: uniqueFilename };
   }
 
-  static async generateUploadUrls(
+  static  generateUploadUrls = async(
     req: Request,
     res: Response,
     next: NextFunction
-  ): Promise<void> {
+  ): Promise<void>=> {
     const { files } = req.body;
 
     if (!Array.isArray(files) || files.length === 0) {

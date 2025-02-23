@@ -1,10 +1,7 @@
 import { NextFunction, Request, Response, RequestHandler } from "express";
 import asyncHandler from "../middlewares/asyncHanlder";
-import {
-  PaginationMetadata,
-  ProjectQueryParams,
-  UserQueryParams,
-} from "../types/miscellaneous";
+import { ProjectQueryParams, UserQueryParams } from "../types/miscellaneous";
+import Pagination from "../utils/Pagination";
 import mongoose from "mongoose";
 import User from "../models/user/user.model";
 import Project from "../models/project/project.model";
@@ -13,43 +10,6 @@ import { AppError, success } from "../utils/responseTypes";
 import logger from "../logs/logger";
 
 class SearchController {
-  private static normalizePagination(
-    options: { page?: string; limit?: string } = {},
-    defaultLimit = 20,
-    maxLimit = 100
-  ): { pageNumber: number; limitNumber: number; skip: number } {
-    const { page = "1", limit = defaultLimit } = options;
-    const pageNumber = Math.max(1, parseInt(page as string, 10));
-    const limitNumber = Math.min(
-      maxLimit,
-      Math.max(1, parseInt(limit as string, 10))
-    );
-    const skip = (pageNumber - 1) * limitNumber;
-
-    return { pageNumber, limitNumber, skip };
-  }
-
-  private static buildPaginationResponse<T>(
-    data: T[],
-    total: number,
-    page: number,
-    limit: number
-  ): { data: T[]; pagination: PaginationMetadata } {
-    const totalPages = Math.ceil(total / limit);
-
-    return {
-      data,
-      pagination: {
-        total,
-        page,
-        pages: totalPages,
-        limit,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1,
-      },
-    };
-  }
-
   private static buildUserSearchPipeline(
     searchQuery?: string,
     skip?: number,
@@ -84,6 +44,8 @@ class SearchController {
           _id: { $toString: "$_id" },
           fullName: 1,
           email: 1,
+          followersCount:1,
+          followingCount:1,
           profile: {
             avatar: 1,
             profession: 1,
@@ -217,7 +179,7 @@ class SearchController {
   ): Promise<void> => {
     try {
       const params = req.query as ProjectQueryParams;
-      const { pageNumber, limitNumber, skip } = this.normalizePagination(
+      const { pageNumber, limitNumber, skip } = Pagination.normalizePagination(
         { page: params.page, limit: params.limit },
         20,
         100
@@ -245,7 +207,7 @@ class SearchController {
       ]);
 
       const totalProjects = countResult[0]?.totalProjects || 0;
-      const response = this.buildPaginationResponse(
+      const response = Pagination.buildPaginationResponse(
         projects,
         totalProjects,
         pageNumber,
@@ -279,7 +241,7 @@ class SearchController {
         return;
       }
 
-      const { pageNumber, limitNumber, skip } = this.normalizePagination(
+      const { pageNumber, limitNumber, skip } = Pagination.normalizePagination(
         { page, limit },
         20,
         100
@@ -305,7 +267,7 @@ class SearchController {
       ]);
 
       const totalUsers = countResult[0]?.totalUsers || 0;
-      const response = this.buildPaginationResponse(
+      const response = Pagination.buildPaginationResponse(
         users,
         totalUsers,
         pageNumber,

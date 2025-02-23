@@ -14,9 +14,9 @@ const googleAuth = async (googleToken: string): Promise<UserDocument> => {
       idToken: googleToken,
       audience: process.env.GOOGLE_CLIENT_ID, // Your Google OAuth Client ID
     });
-   
+
     const payload = ticket.getPayload();
-    
+
     if (!payload) {
       throw new AppError("Invalid Google token", 401);
     }
@@ -29,6 +29,8 @@ const googleAuth = async (googleToken: string): Promise<UserDocument> => {
       user = await User.create({
         email: payload.email,
         fullName: payload.name,
+        followingCount: 0,
+        followersCount: 0,
         profile: {
           avatar: payload.picture,
         },

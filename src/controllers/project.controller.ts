@@ -6,7 +6,11 @@ import { AppError, success } from "../utils/responseTypes";
 import { Types } from "mongoose";
 
 class ProjectController {
-  static async createProject(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async createProject(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     const user = await User.findById(req.user?._id);
     if (!user) {
       next(new AppError("User not found", 404));
@@ -33,7 +37,11 @@ class ProjectController {
     }
   }
 
-  static async updateProject(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async updateProject(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     if (!req.params.id) {
       next(new AppError("Project ID is required", 400));
       return;
@@ -77,7 +85,11 @@ class ProjectController {
     }
   }
 
-  static async getProjectById(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async getProjectById(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     const { id } = req.params;
 
     try {
@@ -85,12 +97,12 @@ class ProjectController {
         .populate({
           path: "creator",
           select:
-            "fullName profile.avatar profile.profession profile.availableForHire email",
+            "fullName profile.avatar profile.profession profile.availableForHire email followersCount followingCount",
         })
         .populate({
           path: "collaborators",
           select:
-            "fullName profile.avatar profile.profession profile.availableForHire email",
+            "fullName profile.avatar profile.profession profile.availableForHire email followersCount followingCount",
         })
         .populate({
           path: "tools",
@@ -126,7 +138,11 @@ class ProjectController {
     return !!project;
   }
 
-  static async getProjects(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async getProjects(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
       const projects = await Project.find({ status: "published" })
         .select("title thumbnail stats creator featured publishedAt status")
@@ -178,13 +194,11 @@ class ProjectController {
         )
         .populate({
           path: "creator",
-          select:
-            "email profile.avatar profile.profession profile.availableForHire fullName",
+          select: "email profile.avatar fullName",
         })
         .populate({
           path: "collaborators",
-          select:
-            "email profile.avatar profile.profession profile.availableForHire fullName",
+          select: "email profile.avatar fullName",
         })
         .lean()
         .exec();

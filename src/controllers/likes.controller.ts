@@ -182,12 +182,12 @@ class LikesController {
         .populate({
           path: "creator",
           select:
-            "fullName email profile.avatar profile.profession profile.profession",
+            "fullName email profile.avatar ",
         })
         .populate({
           path: "collaborators",
           select:
-            "fullName email profile.profession profile.avatar profile.profession",
+            "fullName email profile.avatar ",
         })
         .lean()
         .exec();

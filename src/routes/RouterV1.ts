@@ -5,6 +5,7 @@ import searchRoutes from "./serachRoutes";
 import commentsRoutes from "./commentsRoutes";
 import likesRoutes from "./likesRoutes";
 import bookmarksRoutes from "./bookmarksRoutes";
+import followRoutes from "./followRoutes";
 import toolsRoutes from "./toolsRoutes";
 import ProjectRoutes from "./projectRoutes";
 
@@ -18,5 +19,6 @@ routerV1.use("/comments", commentsRoutes);
 routerV1.use("/likes", likesRoutes);
 routerV1.use("/tools", toolsRoutes);
 routerV1.use("/bookmarks", bookmarksRoutes);
+routerV1.use("/follow", followRoutes);
 
 export default routerV1;

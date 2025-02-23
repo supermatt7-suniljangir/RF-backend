@@ -74,8 +74,9 @@ class FollowController {
         },
       });
 
-      await User.findByIdAndUpdate(userId, { $inc: { followersCount: 1 } });
-      await User.findByIdAndUpdate(followerId, { $inc: { followingCount: 1 } });
+      followedUser.followersCount += 1;
+      followerUser.followingCount += 1;
+      await Promise.all([followedUser.save(), followerUser.save()]);
 
       res
         .status(200)

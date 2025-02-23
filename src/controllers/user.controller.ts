@@ -24,7 +24,6 @@ class UserController {
         next(new AppError("User not found", 404));
         return;
       }
-
       res.status(200).json(
         success({
           data: user,
@@ -110,7 +109,9 @@ class UserController {
           })
         );
       } catch (error: any) {
-        next(new AppError("Google authentication failed: " + error.message, 401));
+        next(
+          new AppError("Google authentication failed: " + error.message, 401)
+        );
       }
       return;
     }
@@ -163,9 +164,8 @@ class UserController {
         // Handle regular profile fields
         Object.keys(req.body.profile).forEach((field) => {
           if (field !== "social") {
-            (user!.profile as Profile)[
-              field as keyof Omit<Profile, "social">
-            ] = req.body.profile[field];
+            (user!.profile as Profile)[field as keyof Omit<Profile, "social">] =
+              req.body.profile[field];
           }
         });
 
@@ -187,7 +187,10 @@ class UserController {
         if (
           field in user!.schema.paths &&
           field !== "password" &&
-          field !== "profile"
+          field !== "profile" &&
+          field !== "email" &&
+          field !== "followersCount" &&
+          field !== "followingCount"
         ) {
           (user as any)[field as keyof UserType] = req.body[field];
         }
@@ -196,11 +199,11 @@ class UserController {
       await user.save();
 
       const updatedUser = await User.findById(user._id);
+      console.log("updated user is", updatedUser);
       if (!updatedUser) {
         next(new AppError("Error fetching updated user", 500));
         return;
       }
-
       res.status(200).json(
         success({
           data: updatedUser,
@@ -229,7 +232,6 @@ class UserController {
         next(new AppError("User not found", 404));
         return;
       }
-
       res.status(200).json(
         success({
           data: user,
@@ -260,9 +262,9 @@ class UserController {
       });
 
       res.status(200).json(
-        success({ 
-          data: true, 
-          message: "User logged out" 
+        success({
+          data: true,
+          message: "User logged out",
         })
       );
     } catch (error: any) {
