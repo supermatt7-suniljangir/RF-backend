@@ -6,7 +6,7 @@ import { AppError, success } from "../utils/responseTypes";
 import { Types } from "mongoose";
 
 class ProjectController {
-  public async createProject(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async createProject(req: Request, res: Response, next: NextFunction): Promise<void> {
     const user = await User.findById(req.user?._id);
     if (!user) {
       next(new AppError("User not found", 404));
@@ -33,7 +33,7 @@ class ProjectController {
     }
   }
 
-  public async updateProject(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async updateProject(req: Request, res: Response, next: NextFunction): Promise<void> {
     if (!req.params.id) {
       next(new AppError("Project ID is required", 400));
       return;
@@ -77,7 +77,7 @@ class ProjectController {
     }
   }
 
-  public async getProjectById(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async getProjectById(req: Request, res: Response, next: NextFunction): Promise<void> {
     const { id } = req.params;
 
     try {
@@ -115,7 +115,7 @@ class ProjectController {
     }
   }
 
-  public async checkProjectOwnership(
+  static async checkProjectOwnership(
     projectId: string,
     userId: Types.ObjectId
   ): Promise<boolean> {
@@ -126,7 +126,7 @@ class ProjectController {
     return !!project;
   }
 
-  public async getProjects(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async getProjects(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const projects = await Project.find({ status: "published" })
         .select("title thumbnail stats creator featured publishedAt status")
@@ -145,7 +145,7 @@ class ProjectController {
     }
   }
 
-  public async getProjectsByUser(
+  static async getProjectsByUser(
     req: Request,
     res: Response,
     next: NextFunction

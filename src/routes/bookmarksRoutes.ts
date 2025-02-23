@@ -3,14 +3,13 @@ import BookmarkController from "../controllers/bookmark.controller";
 import { auth, optionalAuth } from "../middlewares/auth";
 
 const router = Router();
-const bookmarkController = new BookmarkController();
 
-router.put("/:projectId/toggle", auth, bookmarkController.toggleBookmark);
-router.get("/", auth, bookmarkController.getUserBookmarks);
+router.put("/:projectId/toggle", auth, BookmarkController.toggleBookmark);
+router.get("/", auth, BookmarkController.getUserBookmarks);
 router.get(
   "/:projectId/check",
   optionalAuth,
-  bookmarkController.hasUserBookmarkedProject
+  BookmarkController.hasUserBookmarkedProject
 );
 
 export default router;

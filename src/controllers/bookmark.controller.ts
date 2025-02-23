@@ -8,7 +8,7 @@ import { AppError, success } from "../utils/responseTypes";
 
 class BookmarkController {
   // Toggle Bookmark
-  public toggleBookmark = async (
+  static toggleBookmark = async (
     req: Request,
     res: Response,
     next: NextFunction
@@ -67,7 +67,7 @@ class BookmarkController {
   }
 
   // Get User Bookmarks
-  public getUserBookmarks = async (
+  static getUserBookmarks = async (
     req: Request,
     res: Response,
     next: NextFunction
@@ -131,7 +131,7 @@ class BookmarkController {
   }
 
   // Check if User has Bookmarked Project
-  public hasUserBookmarkedProject = async (
+  static hasUserBookmarkedProject = async (
     req: Request,
     res: Response,
     next: NextFunction

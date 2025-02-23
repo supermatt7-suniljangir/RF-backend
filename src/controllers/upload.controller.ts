@@ -17,7 +17,7 @@ interface SignedUrlResponse {
 }
 
 class UploadController {
-  private async generateSignedUrlForFile(file: FileUploadRequest): Promise<SignedUrlResponse> {
+  private static async generateSignedUrlForFile(file: FileUploadRequest): Promise<SignedUrlResponse> {
     const { filename, contentType } = file;
     const fileExtension = filename.split(".").pop();
     const fileType = contentType.includes("video") ? "video" : "image";
@@ -36,7 +36,7 @@ class UploadController {
     return { uploadUrl, key: uniqueFilename };
   }
 
-  public async generateUploadUrls(
+  static async generateUploadUrls(
     req: Request,
     res: Response,
     next: NextFunction

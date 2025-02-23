@@ -5,7 +5,7 @@ import logger from "../logs/logger";
 import { AppError, success } from "../utils/responseTypes";
 
 class FollowController {
-  public async toggleFollowUser(
+  static async toggleFollowUser(
     req: Request,
     res: Response,
     next: NextFunction
@@ -86,7 +86,7 @@ class FollowController {
     }
   }
 
-  public async fetchFollowers(
+  static async fetchFollowers(
     req: Request,
     res: Response,
     next: NextFunction
@@ -111,7 +111,7 @@ class FollowController {
     }
   }
 
-  public async fetchFollowing(
+  static async fetchFollowing(
     req: Request,
     res: Response,
     next: NextFunction
@@ -137,7 +137,7 @@ class FollowController {
     }
   }
 
-  public async isFollowingUser(
+  static async isFollowingUser(
     req: Request,
     res: Response,
     next: NextFunction

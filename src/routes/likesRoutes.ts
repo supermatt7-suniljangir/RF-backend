@@ -4,20 +4,19 @@ import { limiters } from "../utils/rateLimiters";
 import { auth, optionalAuth } from "../middlewares/auth";
 
 const router = Router();
-const likesController = new LikesController();
-router.put("/:projectId/toggle", limiters.dev, auth, likesController.toggleLikeProject);
-router.get("/:projectId", limiters.dev, likesController.fetchProjectLikes);
+router.put("/:projectId/toggle", limiters.dev, auth, LikesController.toggleLikeProject);
+router.get("/:projectId", limiters.dev, LikesController.fetchProjectLikes);
 router.get(
   "/:projectId/check",
   limiters.dev,
   optionalAuth,
-  likesController.hasUserLikedProject
+  LikesController.hasUserLikedProject
 );
 router.get(
   "/:userId/user",
   limiters.dev,
   optionalAuth,
-  likesController.fetchProjectsLikedByUser
+  LikesController.fetchProjectsLikedByUser
 );
 
 export default router;

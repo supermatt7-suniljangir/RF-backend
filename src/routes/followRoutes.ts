@@ -4,18 +4,17 @@ import { limiters } from "../utils/rateLimiters";
 import { auth, optionalAuth } from "../middlewares/auth";
 
 const router = Router();
-const followController = new FollowController();
 
 // Follow or unfollow a user
-router.put("/:userId/toggle", limiters.dev, auth, followController.toggleFollowUser);
+router.put("/:userId/toggle", limiters.dev, auth, FollowController.toggleFollowUser);
 
 // Fetch followers of a user
-router.get("/:userId/followers", limiters.dev, optionalAuth, followController.fetchFollowers);
+router.get("/:userId/followers", limiters.dev, optionalAuth, FollowController.fetchFollowers);
 
 // Fetch users followed by a user
-router.get("/:userId/following", limiters.dev, optionalAuth, followController.fetchFollowing);
+router.get("/:userId/following", limiters.dev, optionalAuth, FollowController.fetchFollowing);
 
 // Check if the authenticated user follows a specific user
-router.get("/:userId/check", limiters.dev, auth, followController.isFollowingUser);
+router.get("/:userId/check", limiters.dev, auth, FollowController.isFollowingUser);
 
 export default router;

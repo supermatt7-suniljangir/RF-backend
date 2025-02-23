@@ -7,7 +7,7 @@ import { AppError, success } from "../utils/responseTypes";
 import { Types } from "mongoose";
 
 class LikesController {
-  public async toggleLikeProject(
+  static async toggleLikeProject(
     req: Request,
     res: Response,
     next: NextFunction
@@ -64,7 +64,7 @@ class LikesController {
     }
   }
 
-  public async fetchProjectLikes(
+  static async fetchProjectLikes(
     req: Request,
     res: Response,
     next: NextFunction
@@ -85,7 +85,7 @@ class LikesController {
     }
   }
 
-  public async hasUserLikedProject(
+  static async hasUserLikedProject(
     req: Request,
     res: Response,
     next: NextFunction
@@ -137,7 +137,7 @@ class LikesController {
     }
   }
 
-  public async fetchProjectsLikedByUser(
+  static async fetchProjectsLikedByUser(
     req: Request,
     res: Response,
     next: NextFunction

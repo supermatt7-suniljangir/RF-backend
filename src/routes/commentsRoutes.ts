@@ -5,15 +5,14 @@ import { limiters } from "../utils/rateLimiters";
 
 const router = express.Router();
 
-const commentController = new CommentController();
 
 // Add a comment
-router.post("/:projectId", limiters.intense, auth, commentController.addProjectComment);
+router.post("/:projectId", limiters.intense, auth, CommentController.addProjectComment);
 
 // Get all comments for a project
-router.get("/:projectId", limiters.standard, commentController.getAllComments);
+router.get("/:projectId", limiters.standard, CommentController.getAllComments);
 
 // Delete a comment
-router.delete("/:projectId/:commentId", limiters.intense, auth, commentController.deleteComment);
+router.delete("/:projectId/:commentId", limiters.intense, auth, CommentController.deleteComment);
 
 export default router;

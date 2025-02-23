@@ -7,7 +7,7 @@ import logger from "../logs/logger";
 import { AppError, success } from "../utils/responseTypes";
 
 class CommentController {
-  public async addProjectComment(
+  static async addProjectComment(
     req: Request,
     res: Response,
     next: NextFunction
@@ -62,7 +62,7 @@ class CommentController {
     }
   }
 
-  public async getAllComments(
+  static async getAllComments(
     req: Request,
     res: Response,
     next: NextFunction
@@ -93,7 +93,7 @@ class CommentController {
     }
   }
 
-  public async deleteComment(
+  static async deleteComment(
     req: Request,
     res: Response,
     next: NextFunction

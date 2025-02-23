@@ -8,7 +8,7 @@ import generateToken from "../utils/generateToken";
 import { AppError, success } from "../utils/responseTypes";
 
 class UserController {
-  public async getUserProfile(
+  static async getUserProfile(
     req: Request,
     res: Response,
     next: NextFunction
@@ -37,7 +37,7 @@ class UserController {
     }
   }
 
-  public async authUser(
+  static async authUser(
     req: Request,
     res: Response,
     next: NextFunction
@@ -92,7 +92,7 @@ class UserController {
     }
   }
 
-  public async registerUser(
+  static async registerUser(
     req: Request,
     res: Response,
     next: NextFunction
@@ -136,7 +136,7 @@ class UserController {
     }
   }
 
-  public async updateUserProfile(
+  static async updateUserProfile(
     req: Request,
     res: Response,
     next: NextFunction
@@ -213,7 +213,7 @@ class UserController {
     }
   }
 
-  public async getUserById(
+  static async getUserById(
     req: Request,
     res: Response,
     next: NextFunction
@@ -241,7 +241,7 @@ class UserController {
     }
   }
 
-  public async logoutUser(
+  static async logoutUser(
     req: Request,
     res: Response,
     next: NextFunction

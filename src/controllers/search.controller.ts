@@ -13,7 +13,7 @@ import { AppError, success } from "../utils/responseTypes";
 import logger from "../logs/logger";
 
 class SearchController {
-  private normalizePagination(
+  private static normalizePagination(
     options: { page?: string; limit?: string } = {},
     defaultLimit = 20,
     maxLimit = 100
@@ -29,7 +29,7 @@ class SearchController {
     return { pageNumber, limitNumber, skip };
   }
 
-  private buildPaginationResponse<T>(
+  private static buildPaginationResponse<T>(
     data: T[],
     total: number,
     page: number,
@@ -50,7 +50,7 @@ class SearchController {
     };
   }
 
-  private buildUserSearchPipeline(
+  private static buildUserSearchPipeline(
     searchQuery?: string,
     skip?: number,
     limit?: number,
@@ -97,7 +97,7 @@ class SearchController {
     ];
   }
 
-  private buildProjectSearchQuery(
+  private static buildProjectSearchQuery(
     params: ProjectQueryParams
   ): mongoose.FilterQuery<any> {
     const { query, category, tag, status = "published", filter } = params;
@@ -148,7 +148,7 @@ class SearchController {
     };
   }
 
-  private buildProjectAggregationPipeline(
+  private static buildProjectAggregationPipeline(
     matchQuery: mongoose.FilterQuery<any>,
     skip?: number,
     limit?: number,
@@ -210,7 +210,11 @@ class SearchController {
     return pipeline;
   }
 
-  public async searchProjects(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static searchProjects = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const params = req.query as ProjectQueryParams;
       const { pageNumber, limitNumber, skip } = this.normalizePagination(
@@ -220,6 +224,9 @@ class SearchController {
       );
 
       const matchQuery = this.buildProjectSearchQuery(params);
+      // if (!params.query && !params.category && !params.tag) {
+      //   matchQuery.featured = true;
+      // }
 
       const [countResult, projects] = await Promise.all([
         Project.aggregate([
@@ -244,7 +251,6 @@ class SearchController {
         pageNumber,
         limitNumber
       );
-
       res.status(200).json(
         success({
           data: response,
@@ -257,18 +263,22 @@ class SearchController {
       logger.error("Error searching projects:", error);
       next(new AppError("Error while searching projects", 500));
     }
-  }
+  };
 
-  public async searchUsers(req: Request, res: Response, next: NextFunction): Promise<void> {
-    const { query, page, limit, sortBy, sortOrder, filter } =
-      req.query as UserQueryParams;
-
-    if (!query || typeof query !== "string" || query.trim() === "") {
-      next(new AppError("Invalid search query", 400));
-      return;
-    }
-
+  static searchUsers = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
+      const { query, page, limit, sortBy, sortOrder, filter } =
+        req.query as UserQueryParams;
+
+      if (!query || typeof query !== "string" || query.trim() === "") {
+        next(new AppError("Invalid search query", 400));
+        return;
+      }
+
       const { pageNumber, limitNumber, skip } = this.normalizePagination(
         { page, limit },
         20,
@@ -312,7 +322,7 @@ class SearchController {
       logger.error("Error searching users:", error);
       next(new AppError("Error while searching users", 500));
     }
-  }
+  };
 }
 
 export default SearchController;

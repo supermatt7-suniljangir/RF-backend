@@ -4,7 +4,7 @@ import Tool from "../models/others/tools.model";
 import logger from "../logs/logger";
 
 class ToolController {
-  public async createTool(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async createTool(req: Request, res: Response, next: NextFunction): Promise<void> {
     const { name, icon } = req.body;
 
     if (!name || name.trim().length === 0) {
@@ -31,7 +31,7 @@ class ToolController {
     }
   }
 
-  public async getAllTools(
+  static async getAllTools(
     req: Request,
     res: Response,
     next: NextFunction
@@ -51,7 +51,7 @@ class ToolController {
     }
   }
 
-  public async deleteTool(
+  static async deleteTool(
     req: Request,
     res: Response,
     next: NextFunction
