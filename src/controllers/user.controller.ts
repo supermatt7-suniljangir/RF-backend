@@ -1,11 +1,11 @@
 import { NextFunction, Request, Response } from "express";
-import User from "../models/user/user.model";
 import { googleAuth } from "./googleAuth.controller";
 import { Types } from "mongoose";
-import { Profile, Social, UserDocument, UserType } from "../types/user";
+import { Profile, Social, UserType } from "../types/user";
 import logger from "../logs/logger";
 import generateToken from "../utils/generateToken";
 import { AppError, success } from "../utils/responseTypes";
+import UserService from "../services/UserService";
 
 class UserController {
   static async getUserProfile(
@@ -19,7 +19,7 @@ class UserController {
     }
 
     try {
-      const user = await User.findById(req.user._id);
+      const user = await UserService.getUserById(req.user._id);
       if (!user) {
         next(new AppError("User not found", 404));
         return;
@@ -47,8 +47,7 @@ class UserController {
       // Google Authentication Flow
       if (googleToken) {
         const googleUserData = await googleAuth(googleToken);
-        // Check if user exists in the database
-        const user = await User.findOne({ email: googleUserData.email });
+        const user = await UserService.getUserByEmail(googleUserData.email);
         if (!user) {
           next(new AppError("User not found", 404));
           return;
@@ -64,9 +63,8 @@ class UserController {
       }
 
       // Email/Password Authentication Flow
-      const user = await User.findOne({ email }).select("+password");
+      const user = await UserService.getUserByEmail(email, true);
 
-      // Check if user exists and password is correct
       if (!user) {
         next(new AppError("Invalid email or password", 401));
         return;
@@ -117,13 +115,17 @@ class UserController {
     }
 
     try {
-      const userExists = await checkUserExists(email);
+      const userExists = await UserService.checkUserExists(email);
       if (userExists) {
         next(new AppError("User already exists", 400));
         return;
       }
 
-      const newUser = await User.create({ email, password, fullName });
+      const newUser = await UserService.createUser({
+        email,
+        password,
+        fullName,
+      });
       generateToken(res, newUser._id);
       res.status(201).json(
         success({
@@ -143,7 +145,7 @@ class UserController {
     next: NextFunction
   ): Promise<void> {
     try {
-      let user: UserDocument | null = await User.findById(req.user?._id);
+      let user = await UserService.getUserById(req.user!._id);
 
       if (!user) {
         next(new AppError("User not found", 404));
@@ -196,14 +198,15 @@ class UserController {
         }
       });
 
-      await user.save();
-
-      const updatedUser = await User.findById(user._id);
-      console.log("updated user is", updatedUser);
+      const updatedUser = await UserService.updateUserById(
+        user._id as string,
+        user
+      );
       if (!updatedUser) {
-        next(new AppError("Error fetching updated user", 500));
+        next(new AppError("Error updating user profile", 500));
         return;
       }
+
       res.status(200).json(
         success({
           data: updatedUser,
@@ -227,7 +230,7 @@ class UserController {
         return;
       }
 
-      const user = await User.findById(req.params.id);
+      const user = await UserService.getUserById(req.params.id);
       if (!user) {
         next(new AppError("User not found", 404));
         return;
@@ -270,16 +273,6 @@ class UserController {
     } catch (error: any) {
       next(new AppError("Internal server error.", 500));
     }
-  }
-}
-
-async function checkUserExists(email: string): Promise<boolean> {
-  try {
-    const user = await User.exists({ email });
-    return user !== null;
-  } catch (error) {
-    console.error("Error checking if user exists:", error);
-    return false;
   }
 }
 

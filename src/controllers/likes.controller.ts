@@ -1,196 +1,116 @@
 import { Request, Response, NextFunction } from "express";
-import Like from "../models/others/likes.model";
-import Project from "../models/project/project.model";
 import logger from "../logs/logger";
-import User from "../models/user/user.model";
 import { AppError, success } from "../utils/responseTypes";
-import { Types } from "mongoose";
+import LikesService from "../services/LikesService";
 
 class LikesController {
+  // Toggle like/unlike a project
   static async toggleLikeProject(
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> {
-    const { projectId } = req.params;
-    const userId = req.user!._id;
-
-    const project = await Project.findById(projectId);
-    if (!project) {
-      logger.error(`Project not found: ${projectId}`);
-      next(new AppError("Project not found", 404));
-      return;
-    }
-
-    const user = await User.findById(userId, "fullName profile.avatar");
-    if (!user) {
-      logger.error(`User not found: ${userId}`);
-      next(new AppError("User not found", 404));
-      return;
-    }
-
     try {
-      const existingLike = await Like.findOne({
-        projectId,
-        "likedBy.userId": userId,
-      });
+      const { projectId } = req.params;
+      const userId = req.user!._id;
 
-      if (existingLike) {
-        await existingLike.deleteOne();
-        project.stats.likes = Math.max(0, project.stats.likes - 1);
-        await project.save();
+      const { liked } = await LikesService.toggleLike(projectId, userId);
 
-        res
-          .status(200)
-          .json(success({ data: false, message: "Project unliked" }));
-        return;
-      }
-
-      await Like.create({
-        projectId,
-        likedBy: {
-          userId,
-          fullName: user.fullName,
-          avatar: user.profile?.avatar || null,
-        },
-      });
-      project.stats.likes += 1;
-      await project.save();
-
-      res.status(200).json(success({ data: true, message: "Project liked" }));
-    } catch (error) {
+      res.status(200).json(
+        success({
+          data: liked,
+          message: liked ? "Project liked" : "Project unliked",
+        })
+      );
+    } catch (error: any) {
       logger.error("Error toggling like:", error);
-      next(new AppError("Error toggling like", 500));
+      next(new AppError(error.message, 500));
     }
   }
 
+  // Fetch likes for a project
   static async fetchProjectLikes(
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> {
-    const { projectId } = req.params;
-
     try {
-      const likes = await Like.find({ projectId });
+      const { projectId } = req.params;
+
+      const likes = await LikesService.getLikes(projectId);
+
       res.status(200).json(
         success({
           data: likes,
           message: "Likes fetched successfully",
         })
       );
-    } catch (error) {
+    } catch (error: any) {
       logger.error("Error fetching project likes:", error);
-      next(new AppError("Error fetching project likes", 500));
+      next(new AppError(error.message, 500));
     }
   }
 
+  // Check if a user has liked a project
   static async hasUserLikedProject(
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> {
-    const { projectId } = req.params;
-    const userId = req.user?._id;
-
-    if (!userId) {
-      res.status(200).json(
-        success({
-          data: false,
-          message: "User not logged in",
-        })
-      );
-      return;
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      next(new AppError("User not found", 404));
-      return;
-    }
-
     try {
-      const like = await Like.findOne({
-        projectId,
-        "likedBy.userId": userId,
-      });
+      const { projectId } = req.params;
+      const userId = req.user?._id;
 
-      if (like) {
+      if (!userId) {
         res.status(200).json(
           success({
-            data: true,
-            message: "User has liked the project",
+            data: false,
+            message: "User not logged in",
           })
         );
         return;
       }
 
+      const hasLiked = await LikesService.hasUserLiked(projectId, userId);
+
       res.status(200).json(
         success({
-          data: false,
-          message: "User has not liked the project",
+          data: hasLiked,
+          message: hasLiked
+            ? "User has liked the project"
+            : "User has not liked the project",
         })
       );
-    } catch (error) {
+    } catch (error: any) {
       logger.error("Error checking like status:", error);
-      next(new AppError("Error checking like status", 500));
+      next(new AppError(error.message, 500));
     }
   }
 
+  // Fetch projects liked by a user
   static async fetchProjectsLikedByUser(
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> {
-    const { userId } = req.params;
-    const user = req.user;
-
-    if (!userId) {
-      next(new AppError("Missing user ID", 400));
-      return;
-    }
-
-    const targetUserId = userId === "personal" ? user?._id.toString() : userId;
-
-    if (!targetUserId) {
-      next(new AppError("User not authenticated", 401));
-      return;
-    }
-
     try {
-      const likedProjects = await Like.find({ "likedBy.userId": targetUserId })
-        .select("projectId")
-        .lean()
-        .exec();
+      const { userId } = req.params;
+      const user = req.user;
 
-      if (!likedProjects.length) {
-        res.status(200).json(
-          success({
-            data: [],
-            message: "No projects liked by the user",
-          })
-        );
+      if (!userId) {
+        next(new AppError("Missing user ID", 400));
         return;
       }
 
-      const projectIds = likedProjects.map((like) => like.projectId);
+      const targetUserId =
+        userId === "personal" ? user?._id.toString() : userId;
 
-      const projects = await Project.find({ _id: { $in: projectIds } })
-        .select(
-          "title thumbnail stats creator collaborators featured publishedAt status"
-        )
-        .populate({
-          path: "creator",
-          select:
-            "fullName email profile.avatar ",
-        })
-        .populate({
-          path: "collaborators",
-          select:
-            "fullName email profile.avatar ",
-        })
-        .lean()
-        .exec();
+      if (!targetUserId) {
+        next(new AppError("User not authenticated", 401));
+        return;
+      }
+
+      const projects = await LikesService.getProjectsLikedByUser(targetUserId);
 
       res.status(200).json(
         success({
@@ -200,7 +120,7 @@ class LikesController {
       );
     } catch (error: any) {
       logger.error("Error fetching projects liked by user:", error.message);
-      next(new AppError("Error fetching projects liked by user", 500));
+      next(new AppError(error.message, 500));
     }
   }
 }

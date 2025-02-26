@@ -19,7 +19,6 @@ export const optionalAuth = (
   try {
     const decoded = jwt.verify(token, JWT_SECRET!) as JwtPayload;
     req.user = decoded;
-    logger.info("auth middleware - user authenticated");
     next();
   } catch (error: any) {
     logger.error(`auth middleware - error verifying token ${error.message}`);
@@ -39,13 +38,11 @@ export const auth = (req: Request, res: Response, next: NextFunction): void => {
     res.status(403);
     next(new AppError("Authentication required", 403));
   }
-  logger.info("auth middleware - verifying token", token);
   try {
     const decoded = jwt.verify(token, JWT_SECRET!) as JwtPayload;
     if (!decoded) {
       return next(new AppError("invalid jwt", 401));
     }
-
     req.user = decoded;
     next();
   } catch (error: any) {

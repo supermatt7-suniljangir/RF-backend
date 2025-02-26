@@ -1,10 +1,14 @@
 import { Request, Response, NextFunction } from "express";
 import { AppError, success } from "../utils/responseTypes";
-import Tool from "../models/others/tools.model";
 import logger from "../logs/logger";
+import ToolService from "../services/ToolsService"; // Adjust the import path as needed
 
 class ToolController {
-  static async createTool(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async createTool(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     const { name, icon } = req.body;
 
     if (!name || name.trim().length === 0) {
@@ -14,10 +18,7 @@ class ToolController {
     }
 
     try {
-      const tool = await Tool.create({
-        name,
-        icon,
-      });
+      const tool = await ToolService.createTool(name, icon);
 
       res.status(201).json(
         success({
@@ -37,7 +38,7 @@ class ToolController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const tools = await Tool.find().lean();
+      const tools = await ToolService.getAllTools();
 
       res.status(200).json(
         success({
@@ -59,14 +60,12 @@ class ToolController {
     const { toolId } = req.params;
 
     try {
-      const tool = await Tool.findById(toolId);
+      const tool = await ToolService.deleteTool(toolId);
       if (!tool) {
         logger.error(`Tool not found: ${toolId}`);
         next(new AppError("Tool not found", 404));
         return;
       }
-
-      await tool.deleteOne();
 
       res.status(200).json(
         success({

@@ -1,4 +1,4 @@
-import { Schema, model } from "mongoose";
+import { Document, Schema, model } from "mongoose";
 import { IBookmark } from "../../types/others";
 
 const BookmarkSchema = new Schema<IBookmark>(

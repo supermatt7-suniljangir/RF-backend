@@ -1,5 +1,4 @@
 import { NextFunction, Request, Response, RequestHandler } from "express";
-import asyncHandler from "../middlewares/asyncHanlder";
 import { ProjectQueryParams, UserQueryParams } from "../types/miscellaneous";
 import Pagination from "../utils/Pagination";
 import mongoose from "mongoose";
