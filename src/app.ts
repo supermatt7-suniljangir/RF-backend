@@ -11,8 +11,6 @@ import logger from "./logs/logger";
 import routerV1 from "./routes/RouterV1";
 import { globalErrorHandler, notFound } from "./middlewares/error";
 import { STAGES } from "./utils/stages";
-import { auth } from "./middlewares/auth";
-import UserController from "./controllers/user.controller";
 
 const app = express();
 
@@ -21,22 +19,36 @@ app.use(express.json());
 app.use(compression());
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 
-app.use((req: Request, res: Response, next: NextFunction) => {
+// Assuming this is part of an Express middleware
+app.use((req, res, next) => {
+  const originalUrl = req.originalUrl || req.url;
   const start = Date.now();
-  const originalUrl = req.originalUrl;
 
   res.on("finish", () => {
     const duration = Date.now() - start;
-    logger.info(
-      `${req.method} ${originalUrl} → ${res.statusCode} (${duration}ms)`,
-      {
-        method: req.method,
-        url: originalUrl,
-        statusCode: res.statusCode,
-        duration,
-      }
-    );
+    const statusCode = res.statusCode;
+    const logMessage = `${req.method} ${originalUrl} → ${statusCode} (${duration}ms)`;
+    const logData = {
+      method: req.method,
+      url: originalUrl,
+      statusCode: statusCode,
+      duration,
+    };
+
+    // Use different log levels based on status code
+    if (statusCode >= 500) {
+      // Server errors
+      logger.error(logMessage, logData);
+    } else if (statusCode >= 400) {
+      // Client errors
+      logger.warn(logMessage, logData);
+    } else {
+      // Success responses
+      logger.info(logMessage, logData);
+    }
   });
+
+  // This should be inside the middleware function
   next();
 });
 

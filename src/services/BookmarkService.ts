@@ -10,7 +10,7 @@ class BookmarkService {
     const bookmarkExists = await this.dbService.findOne({ userId, projectId });
 
     if (bookmarkExists) {
-      await this.dbService.delete(bookmarkExists._id);
+      await this.dbService.delete(bookmarkExists?._id);
       return { bookmarked: false };
     } else {
       const newBookmark = await this.dbService.create({ userId, projectId });
