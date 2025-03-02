@@ -1,7 +1,7 @@
 import { Response } from "express";
 import jwt from "jsonwebtoken";
 import { AppError } from "./responseTypes";
-import logger from "../logs/logger";
+import logger from "../config/logger";
 import { STAGES } from "./stages";
 
 const generateToken = (res: Response, _id: any): string => {

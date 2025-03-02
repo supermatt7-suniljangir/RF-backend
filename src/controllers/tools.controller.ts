@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { AppError, success } from "../utils/responseTypes";
-import logger from "../logs/logger";
+import logger from "../config/logger";
 import ToolService from "../services/ToolsService"; // Adjust the import path as needed
 
 class ToolController {

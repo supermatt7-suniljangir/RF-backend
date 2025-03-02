@@ -1,5 +1,5 @@
 import { Response } from "express";
-import logger from "../logs/logger";
+import logger from "../config/logger";
 
 export const clearCookie = (res:Response)=>{
   logger.info("clearing cookie");

@@ -7,7 +7,7 @@ import helmet from "helmet";
 import expressWinston from "express-winston";
 import dotenv from "dotenv";
 dotenv.config();
-import logger from "./logs/logger";
+import logger from "./config/logger";
 import routerV1 from "./routes/RouterV1";
 import { globalErrorHandler, notFound } from "./middlewares/error";
 import { STAGES } from "./utils/stages";

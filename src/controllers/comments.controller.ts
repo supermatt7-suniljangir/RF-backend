@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import logger from "../logs/logger";
+import logger from "../config/logger";
 import { AppError, success } from "../utils/responseTypes";
 import CommentService from "../services/CommentsService";
 

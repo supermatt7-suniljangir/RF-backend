@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { googleAuth } from "./googleAuth.controller";
 import { Types } from "mongoose";
 import { Profile, Social, UserType } from "../types/user";
-import logger from "../logs/logger";
+import logger from "../config/logger";
 import generateToken from "../utils/generateToken";
 import { AppError, success } from "../utils/responseTypes";
 import UserService from "../services/UserService";

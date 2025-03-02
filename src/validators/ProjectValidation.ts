@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import { isValidObjectId } from "mongoose";
-import logger from "../logs/logger";
+import logger from "../config/logger";
 import { AppError, formValidationError } from "../utils/responseTypes";
 
 // Custom regex pattern for URLs

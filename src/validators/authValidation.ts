@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { z, ZodError } from "zod";
-import logger from "../logs/logger";
+import logger from "../config/logger";
 import { AppError, formValidationError } from "../utils/responseTypes";
 
 // Login Schema

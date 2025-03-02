@@ -6,7 +6,7 @@ import User from "../models/user/user.model";
 import Project from "../models/project/project.model";
 import { MiniUser } from "../types/user";
 import { AppError, success } from "../utils/responseTypes";
-import logger from "../logs/logger";
+import logger from "../config/logger";
 
 class SearchController {
   private static buildUserSearchPipeline(

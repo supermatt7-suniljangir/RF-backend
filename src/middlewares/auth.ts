@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../config/configURLs";
 import { JwtPayload } from "../types/jwt-payload";
-import logger from "../logs/logger";
+import logger from "../config/logger";
 import { AppError } from "../utils/responseTypes";
 // Optional auth middleware that sets req.user if token exists but doesn't block if no token
 export const optionalAuth = (

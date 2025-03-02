@@ -1,6 +1,6 @@
 // the not found middleware
 import { Request, Response, NextFunction, ErrorRequestHandler } from "express";
-import logger from "../logs/logger";
+import logger from "../config/logger";
 import { AppError } from "../utils/responseTypes";
 
 export const notFound = (req: Request, res: Response, next: NextFunction) => {
