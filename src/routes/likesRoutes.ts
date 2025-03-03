@@ -1,5 +1,5 @@
 import { RequestHandler, Router } from "express";
-import LikesController from "../controllers/likes.controller";
+import LikesController from "../controllers/like.controller";
 import { limiters } from "../utils/rateLimiters";
 import { auth, optionalAuth } from "../middlewares/auth";
 

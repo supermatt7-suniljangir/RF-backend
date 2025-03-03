@@ -38,6 +38,7 @@ export const auth = (req: Request, res: Response, next: NextFunction): void => {
     res.status(403);
     next(new AppError("Authentication required", 403));
   }
+  
   try {
     const decoded = jwt.verify(token, JWT_SECRET!) as JwtPayload;
     if (!decoded) {

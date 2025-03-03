@@ -16,6 +16,7 @@
     "express-winston": "^4.2.0",
     "google-auth-library": "^9.14.2",
     "helmet": "^8.0.0",
+    "ioredis": "^5.5.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.8.0",
     "morgan": "^1.10.0",

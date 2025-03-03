@@ -1,69 +1,79 @@
-import { PORT } from "./config/configURLs";
-import { connectDB, disconnectDB } from "./config/db";
-import app from "./app";
-import logger from "./config/logger";
-import { Server } from "socket.io";
-import http from "http";
+/**
+ * Server Initialization Module (server.ts)
+ *
+ * This module initializes the HTTP server, connects to the database, and integrates WebSocket logic.
+ * It also handles graceful shutdown procedures.
+ */
 
+import { PORT } from "./config/configURLs"; // Configuration for server port
+import { connectDB, disconnectDB } from "./config/db"; // Database connection utilities
+import app from "./app"; // Express application
+import logger from "./config/logger"; // Custom logger for logging server events
+import { Server } from "socket.io"; // Socket.IO for WebSocket communication
+import http from "http"; // HTTP module for creating the server
+import { initializeSocket } from "./socket"; // WebSocket logic
+import { getCorsConfig } from "./config/corsConfig"; // CORS configuration
+
+/**
+ * initializeServer Function
+ *
+ * This function initializes the server, sets up WebSocket communication, and handles graceful shutdown.
+ */
 const initializeServer = async () => {
   try {
+    // Step 1: Connect to the database
     await connectDB();
-    
-    // Attach WebSocket to the existing HTTP server
+
+    // Step 2: Create an HTTP server and attach the Express app
     const server = http.createServer(app);
+    
+    // Step 3: Initialize Socket.IO with CORS configuration
+    const { origin, credentials } = getCorsConfig();
     const io = new Server(server, {
       cors: {
-        origin: process.env.NODE_ENV === "production"
-          ? ["https://yourdomain.com", "https://www.yourdomain.com"]
-          : "http://localhost:5173",
-        credentials: true,
+        origin,
+        credentials,
       },
     });
 
-    // WebSocket Logic
-    io.on("connection", (socket) => {
-      console.log(`User connected: ${socket.id}`);
+    // Step 4: Initialize WebSocket logic
+    initializeSocket(io);
 
-      socket.on("register", (userId) => {
-        console.log(`User ${userId} registered with socket ID ${socket.id}`);
-        socket.join(userId); // Join a room with user ID
-      });
-
-      socket.on("sendMessage", ({ to, text }) => {
-        console.log(`Message from ${socket.id} to ${to}: ${text}`);
-        io.to(to).emit("receiveMessage", { from: socket.id, text });
-      });
-
-      socket.on("disconnect", () => {
-        console.log(`User disconnected: ${socket.id}`);
-      });
-    });
-
+    // Step 5: Start the server and listen on the specified port
     server.listen(PORT, () => {
-      logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+      logger.info(
+        `Server running in ${process.env.NODE_ENV} mode on port ${PORT}`
+      );
     });
 
-    // Graceful shutdown
+    /**
+     * Graceful Shutdown Handler
+     *
+     * This function ensures the server shuts down gracefully on SIGTERM or SIGINT signals.
+     */
     const gracefulShutdown = async (signal: string) => {
       logger.info(`Received ${signal}. Starting graceful shutdown`);
       try {
         await new Promise((resolve) => {
-          server.close(resolve);
+          server.close(resolve); // Close the HTTP server
         });
-        await disconnectDB();
-        process.exit(0);
+        await disconnectDB(); // Disconnect from the database
+        process.exit(0); // Exit with success code
       } catch (err) {
         logger.error(`Error during graceful shutdown: ${err}`);
-        process.exit(1);
+        process.exit(1); // Exit with error code
       }
     };
 
+    // Attach graceful shutdown handlers to SIGTERM and SIGINT signals
     process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
     process.on("SIGINT", () => gracefulShutdown("SIGINT"));
   } catch (error) {
+    // Handle any errors during server initialization
     logger.error(`Error during server initialization: ${error}`);
-    process.exit(1);
+    process.exit(1); // Exit with error code
   }
 };
 
+// Initialize the server
 initializeServer();
