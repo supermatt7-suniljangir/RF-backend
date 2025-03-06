@@ -1,8 +1,8 @@
-import { Router } from "express";
-import { limiters } from "../utils/rateLimiters";
+import {Router} from "express";
+import {limiters} from "../utils/rateLimiters";
 import ProjectController from "../controllers/project.controller";
-import { auth, optionalAuth } from "../middlewares/auth";
-import { validateProject } from "../validators/projectValidation";
+import {auth, optionalAuth} from "../middlewares/auth";
+import {validateProject} from "../validators/ProjectValidation";
 
 const router = Router();
 
