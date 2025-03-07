@@ -66,10 +66,7 @@ app.use(express.urlencoded({extended: true, limit: "10kb"}));
  * - Warn (400-499): Client errors
  * - Info (200-399): Successful responses
  */
-app.use((req, res, next) => {
-    console.log("CORS Headers:", res.getHeaders());
-    next();
-});
+
 
 app.use((req, res, next) => {
     const originalUrl = req.originalUrl || req.url; // Capture the request URL

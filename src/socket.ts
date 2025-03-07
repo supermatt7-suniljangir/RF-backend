@@ -73,8 +73,6 @@ export const initializeSocket = (io: Server) => {
       return count <= 5; // Allow max 5 messages per 10 seconds
     };
 
-
-
     /**
      * WebSocket Event: "sendMessage"
      *
@@ -94,37 +92,51 @@ export const initializeSocket = (io: Server) => {
         const senderUserId = await redis.get(`socket:${socket.id}`);
         if (!senderUserId) throw new Error("User not registered.");
 
-        if (senderUserId === to) throw new Error("Cannot send messages to yourself.");
+        if (senderUserId === to)
+          throw new Error("Cannot send messages to yourself.");
 
         // Rate limiting check
         if (!(await canSendMessage(senderUserId))) {
           throw new Error("Rate limit exceeded. Please wait.");
         }
+        // Generate consistent conversationId
+        const conversationId = createConversationId(senderUserId, to);
 
+        // Check if this is a new conversation
+        const existingConversation = await Message.findOne({ conversationId });
+        const isNewConversation = !existingConversation;
 
         // Save message to MongoDB
         const newMessage = await Message.create({
           sender: senderUserId,
           recipient: to,
+          conversationId,
           text,
         });
+        // Create message object in consistent format for both sender and recipient
+        const messageToSend = {
+          text,
+          sender: senderUserId,
+          recipient: to,
+          _id: newMessage._id,
+          // Add any other fields from newMessage that you need in the frontend
+        };
+        // Send message to all recipient devices
+        const recipientSockets = await redis.smembers(`userSockets:${to}`);
 
-        logger.info(`Message stored in DB: ${newMessage._id}`);
-
-          // Send message to all recipient devices
-          const recipientSockets = await redis.smembers(`userSockets:${to}`);
-          recipientSockets.forEach((socketId) => {
-            io.to(socketId).emit("receiveMessage", {
-              from: senderUserId,
-              text,
+        recipientSockets.forEach((socketId) => {
+          io.to(socketId).emit("receiveMessage", messageToSend);
+          if (isNewConversation) {
+            io.to(socketId).emit("revalidateConversations", {
+              with: senderUserId,
             });
-          });
-
-        socket.emit("receiveMessage", {
-          from: senderUserId,
-          text,
-          messageId: newMessage._id,
+            io.to(senderUserId).emit("revalidateConversations", {
+              with: to,
+            });
+          }
         });
+
+        socket.emit("receiveMessage", messageToSend);
       } catch (error) {
         logger.error(`Error sending message: ${error}`);
         socket.emit("messageError", {
@@ -143,19 +155,19 @@ export const initializeSocket = (io: Server) => {
     socket.on("disconnect", async () => {
       try {
         const userId = await redis.get(`socket:${socket.id}`);
-    
+
         if (userId) {
           // Remove this specific socket from the user's set
           await redis.srem(`userSockets:${userId}`, socket.id);
           await redis.del(`socket:${socket.id}`);
-    
+
           // Check if user has any active sockets left
           const remainingSockets = await redis.scard(`userSockets:${userId}`);
           if (remainingSockets === 0) {
             await redis.del(`userSockets:${userId}`); // Remove empty set
             logger.info(`User ${userId} is fully disconnected.`);
           }
-    
+
           logger.info(`Socket ${socket.id} removed for user ${userId}`);
         } else {
           logger.warn(`Socket ${socket.id} not found in Redis`);
@@ -166,3 +178,12 @@ export const initializeSocket = (io: Server) => {
     });
   });
 };
+
+function createConversationId(userId1: string, userId2: string): string {
+  // Convert to string if they're ObjectIds
+  const id1 = userId1.toString();
+  const id2 = userId2.toString();
+
+  // Create a consistent ID regardless of order
+  return id1 < id2 ? `${id1}_${id2}` : `${id2}_${id1}`;
+}
