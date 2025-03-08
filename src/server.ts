@@ -1,10 +1,3 @@
-/**
- * Server Initialization Module (server.ts)
- *
- * This module initializes the HTTP server, connects to the database, and integrates WebSocket logic.
- * It also handles graceful shutdown procedures.
- */
-
 import {PORT} from "./config/configURLs"; // Configuration for server port
 import {connectDB, disconnectDB} from "./config/db"; // Database connection utilities
 import app from "./app"; // Express application
@@ -33,13 +26,13 @@ const initializeServer = async () => {
             cors: getCorsConfig(),
         });
 
-        // Step 4: Initialize WebSocket logic
-        initializeSocket(io);
+        // Step 4: Initialize WebSocket logic and get the cleanup function
+        const socketManager: { cleanup: () => void } = initializeSocket(io);
 
         // Step 5: Start the server and listen on the specified port
         server.listen(PORT, () => {
             logger.info(
-                `Server running in ${process.env.NODE_ENV} mode on port ${PORT}`
+              `Server running in ${process.env.NODE_ENV} mode on port ${PORT}`
             );
         });
 
@@ -51,10 +44,18 @@ const initializeServer = async () => {
         const gracefulShutdown = async (signal: string) => {
             logger.info(`Received ${signal}. Starting graceful shutdown`);
             try {
+                // First, clean up socket connections
+                socketManager.cleanup();
+
+                // Then close the HTTP server
                 await new Promise((resolve) => {
-                    server.close(resolve); // Close the HTTP server
+                    server.close(resolve);
                 });
-                await disconnectDB(); // Disconnect from the database
+
+                // Finally disconnect from the database
+                await disconnectDB();
+
+                logger.info("Graceful shutdown completed successfully");
                 process.exit(0); // Exit with success code
             } catch (err) {
                 logger.error(`Error during graceful shutdown: ${err}`);
@@ -62,9 +63,17 @@ const initializeServer = async () => {
             }
         };
 
+        // Use a single handler to prevent multiple handlers being registered
+        let shuttingDown = false;
+        const handleShutdown = (signal: string) => {
+            if (shuttingDown) return;
+            shuttingDown = true;
+            gracefulShutdown(signal);
+        };
+
         // Attach graceful shutdown handlers to SIGTERM and SIGINT signals
-        process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
-        process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+        process.on("SIGTERM", () => handleShutdown("SIGTERM"));
+        process.on("SIGINT", () => handleShutdown("SIGINT"));
     } catch (error) {
         // Handle any errors during server initialization
         logger.error(`Error during server initialization: ${error}`);
