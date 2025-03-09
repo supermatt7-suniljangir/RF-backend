@@ -1,53 +1,44 @@
-/**
- * WebSocket Module (socket.ts)
- *
- * This module handles all WebSocket-related logic, including:
- * - Connection and disconnection events.
- * - User registration and room management.
- * - Message sending and broadcasting.
- * - Heartbeat mechanism that aligns with the frontend implementation.
- * - Proper error handling and rate limiting.
- */
-import {Server} from "socket.io";
+import { Server } from "socket.io";
 import logger from "./config/logger";
 import redis from "./utils/redis";
-import {handleSendMessage} from "./socketEvents/sendMessage";
+import { handleSendMessage } from "./socketEvents/sendMessage";
+import { registerConversationEvents } from "./socketEvents/conversationEvents";
 
 /**
  * initializeSocket Function
- *
- * Initializes and configures the WebSocket server.
- *
- * @param io - The Socket.IO server instance.
  */
 export const initializeSocket = (io: Server) => {
     io.on("connection", (socket) => {
-        logger.info(`User connected: ${socket.id}`);
 
         // Send periodic pings
-        const pingInterval = setInterval(() => {
-            socket.emit("ping");
-        }, 1000);
+        const pingInterval = setInterval(() => socket.emit("ping"), 30000);
 
-        // Register event
+        // Register user on connection
         socket.on("register", async (userId) => {
             try {
-                logger.info(`User ${userId} registered with socket ID ${socket.id}`);
                 await redis.sadd(`userSockets:${userId}`, socket.id);
                 await redis.set(`socket:${socket.id}`, userId, "EX", 86400);
-                socket.join(userId);
+                socket.data.ready = true;
+                registerConversationEvents(socket, io);
+                socket.emit("ready");
+
             } catch (error) {
                 logger.error(`Error registering user ${userId}: ${error}`);
-                socket.emit("error", {message: "Failed to register with server"});
+                socket.emit("error", { message: "Failed to register with server" });
             }
         });
 
-        // Send message event
-        socket.on("sendMessage", async ({to, text}) =>
-          handleSendMessage(socket, io, to, text)
-        );
 
-        // Disconnect event
+        // Handle direct message events (wait until socket is ready)
+        socket.on("sendMessage", ({ to, text }) => {
+            if (!socket.data.ready) {
+                socket.emit("error", { message: "Socket not ready" });
+                return;
+            }
+            handleSendMessage(socket, io, to, text);
+        })
+
+        // Handle disconnection
         socket.on("disconnect", async () => {
             try {
                 clearInterval(pingInterval);
