@@ -16,6 +16,8 @@ export const initializeSocket = (io: Server) => {
         // Register user on connection
         socket.on("register", async (userId) => {
             try {
+                socket.data.ready = false;
+
                 await redis.sadd(`userSockets:${userId}`, socket.id);
                 await redis.set(`socket:${socket.id}`, userId, "EX", 86400);
                 socket.data.ready = true;
