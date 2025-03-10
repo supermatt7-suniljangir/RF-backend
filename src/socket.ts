@@ -21,7 +21,6 @@ export const initializeSocket = (io: Server) => {
                 socket.data.ready = true;
                 registerConversationEvents(socket, io);
                 socket.emit("ready");
-
             } catch (error) {
                 logger.error(`Error registering user ${userId}: ${error}`);
                 socket.emit("error", { message: "Failed to register with server" });
