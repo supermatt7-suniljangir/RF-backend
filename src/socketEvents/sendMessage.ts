@@ -104,10 +104,11 @@ export const handleSendMessage = async (
         const isSenderInRoom = socket.rooms.has(`chat:${conversationId}`);
 
         if (!isSenderInRoom) {
-            logger.info(`Sender ${senderUserId} is not in room chat:${conversationId}. Joining now...`);
+            logger.debug(`Sender ${senderUserId} is not in room chat:${conversationId}. Joining now...`);
             await joinConversation(socket, recipientId); // Force join before sending
         }
-
+        const isNewConversation = !(await Message.findOne({conversationId}));
+logger.debug('is new conversations?', isNewConversation);
         // ✅ Save message to MongoDB
         const newMessage = await Message.create({
             sender: senderUserId,
@@ -129,20 +130,20 @@ export const handleSendMessage = async (
 
         // ✅ Revalidate conversations using user-specific sockets
         const recipientSockets = await redis.smembers(`userSockets:${recipientId}`);
-        const isNewConversation = !(await Message.findOne({conversationId}));
 
         if (isNewConversation) {
+            logger.debug('the recipient sockets are', recipientSockets);
             recipientSockets.forEach((socketId) => {
                 io.to(socketId).emit("revalidateConversations", {with: senderUserId});
             });
-
             const senderSockets = await redis.smembers(`userSockets:${senderUserId}`);
+            logger.debug('the sender sockets are', senderSockets);
             senderSockets.forEach((socketId) => {
                 io.to(socketId).emit("revalidateConversations", {with: recipientId});
             });
         }
 
-        logger.info(`Message sent from ${senderUserId} to ${recipientId}`);
+        logger.debug(`Message sent from ${senderUserId} to ${recipientId}`);
     } catch (error: any) {
         logger.error(`Error sending message: ${error.message}`);
         socket.emit("error", {

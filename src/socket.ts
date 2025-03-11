@@ -17,12 +17,12 @@ export const initializeSocket = (io: Server) => {
         socket.on("register", async (userId) => {
             try {
                 socket.data.ready = false;
-
                 await redis.sadd(`userSockets:${userId}`, socket.id);
                 await redis.set(`socket:${socket.id}`, userId, "EX", 86400);
                 socket.data.ready = true;
                 registerConversationEvents(socket, io);
                 socket.emit("ready");
+                logger.info(`Socket ${socket.id} registered for user ${userId}`);
             } catch (error) {
                 logger.error(`Error registering user ${userId}: ${error}`);
                 socket.emit("error", { message: "Failed to register with server" });

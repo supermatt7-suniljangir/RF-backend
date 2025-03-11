@@ -1,6 +1,6 @@
 // In conversationEvents.ts
-import { Server, Socket } from "socket.io";
-import { joinConversation, leaveConversation } from "./roomManager";
+import {Server, Socket} from "socket.io";
+import {joinConversation, leaveConversation} from "./roomManager";
 import logger from "../config/logger";
 
 /**
@@ -10,18 +10,17 @@ export const registerConversationEvents = (socket: Socket, io: Server) => {
 
     socket.on("joinConversation", async (recipientId) => {
         if (!recipientId) {
-            socket.emit("error", { message: "Invalid recipient ID" });
+            socket.emit("error", {message: "Invalid recipient ID"});
             return;
         }
 
         try {
             const conversationId = await joinConversation(socket, recipientId);
             if (!conversationId) throw new Error("Failed to join conversation");
-
-            socket.emit("joinedConversation", { conversationId });
+            socket.emit("joinedConversation", {conversationId});
         } catch (error: any) {
             logger.error(`Failed to join conversation: ${error.message}`);
-            socket.emit("error", { message: error.message });
+            socket.emit("error", {message: error.message});
         }
     });
 
@@ -32,7 +31,7 @@ export const registerConversationEvents = (socket: Socket, io: Server) => {
             await leaveConversation(socket, recipientId);
         } catch (error: any) {
             logger.error(`Failed to leave conversation: ${error.message}`);
-            socket.emit("error", { message: error.message });
+            socket.emit("error", {message: error.message});
         }
     });
 };
