@@ -5,6 +5,8 @@ import logger from "../config/logger";
 import redis from "../utils/redis";
 import {canSendMessage} from "../utils/rateLimiters";
 import {joinConversation} from "./roomManager";
+import MessageService from "../services/MessageService";
+import {invalidateCache} from "../redis/redisClient";
 
 export const handleSendMessage = async (
     socket: Socket,
@@ -32,11 +34,13 @@ export const handleSendMessage = async (
             logger.debug(`Sender ${senderUserId} is not in room chat:${conversationId}. Joining now...`);
             await joinConversation(socket, recipientId); // Force join before sending
         }
-        const isNewConversation = !(await Message.findOne({conversationId}));
+
+        const isNewConversation = await MessageService.isNewConversation(conversationId);
+
         // ✅ Save message to MongoDB
-        const newMessage = await Message.create({
-            sender: senderUserId,
-            recipient: recipientId,
+        const newMessage = await MessageService.addNewMessage({
+            senderId: senderUserId,
+            recipientId: recipientId,
             conversationId,
             text,
         });
@@ -52,16 +56,22 @@ export const handleSendMessage = async (
         // ✅ Emit to the conversation-based room
         io.to(`chat:${conversationId}`).emit("receiveMessage", messageToSend);
 
-        // ✅ Revalidate conversations using user-specific sockets
-        const recipientSockets = await redis.smembers(`userSockets:${recipientId}`);
-
+        // ✅ Revalidate recent conversations if it's a new conversation
         if (isNewConversation) {
-            logger.debug('the recipient sockets are', recipientSockets);
+            logger.debug('Revalidating recent conversations for sender and recipient');
+
+            await Promise.all([
+                invalidateCache(`conversations:${senderUserId}`),
+                invalidateCache(`conversation:${recipientId}`),
+            ]);
+
+            // ✅ Emit "revalidateConversations" event to both users
+            const recipientSockets = await redis.smembers(`userSockets:${recipientId}`);
             recipientSockets.forEach((socketId) => {
                 io.to(socketId).emit("revalidateConversations", {with: senderUserId});
             });
+
             const senderSockets = await redis.smembers(`userSockets:${senderUserId}`);
-            logger.debug('the sender sockets are', senderSockets);
             senderSockets.forEach((socketId) => {
                 io.to(socketId).emit("revalidateConversations", {with: recipientId});
             });

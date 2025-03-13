@@ -3,12 +3,25 @@ import DbService from "./";
 import Follow from "../models/others/follow.model";
 import User from "../models/user/user.model";
 import {IFollow} from "../types/others";
-import {redisClient} from "../redis/redisClient";
+import {redisClient, invalidateCache} from "../redis/redisClient";
 import logger from "../config/logger";
 
 class FollowService {
     private dbService = new DbService<IFollow>(Follow);
     private CACHE_EXPIRATION = 3600; // 1 hour
+
+    // Cache key generation methods
+    private getFollowersKey(userId: string): string {
+        return `followers:${userId}`;
+    }
+
+    private getFollowingKey(userId: string): string {
+        return `following:${userId}`;
+    }
+
+    private getIsFollowingKey(followerId: string, userId: string): string {
+        return `following:${followerId}:${userId}`;
+    }
 
     // Toggle follow/unfollow a user
     async toggleFollow(followerId: string, userId: string) {
@@ -48,8 +61,7 @@ class FollowService {
             await Promise.all([followedUser.save(), followerUser.save()]);
 
             // Invalidate cache since data changed
-            await this.invalidateCache(followerId);
-            await this.invalidateCache(userId);
+            await this.invalidateFollowCache(followerId, userId);
 
             return {followed: false};
         }
@@ -72,15 +84,14 @@ class FollowService {
         await Promise.all([followedUser.save(), followerUser.save()]);
 
         // Invalidate cache since data changed
-        await this.invalidateCache(followerId);
-        await this.invalidateCache(userId);
+        await this.invalidateFollowCache(followerId, userId);
 
         return {followed: true};
     }
 
     // Fetch followers of a user
     async getFollowers(userId: string) {
-        const cacheKey = `followers:${userId}`;
+        const cacheKey = this.getFollowersKey(userId);
 
         // Try fetching from cache
         const cachedData = await redisClient.get(cacheKey);
@@ -108,7 +119,7 @@ class FollowService {
 
     // Fetch users a user is following
     async getFollowing(userId: string) {
-        const cacheKey = `following:${userId}`;
+        const cacheKey = this.getFollowingKey(userId);
 
         // Try fetching from cache
         const cachedData = await redisClient.get(cacheKey);
@@ -136,7 +147,7 @@ class FollowService {
 
     // Check if a user is following another user
     async isFollowing(followerId: string, userId: string) {
-        const cacheKey = `following:${followerId}:${userId}`;
+        const cacheKey = this.getIsFollowingKey(followerId, userId);
 
         // Try fetching from cache
         const cachedValue = await redisClient.get(cacheKey);
@@ -163,13 +174,16 @@ class FollowService {
         return isFollowing;
     }
 
-    // Invalidate cache when data changes
-    private async invalidateCache(userId: string) {
-        logger.debug(`Invalidating cache for followSchema`);
-        await Promise.all([
-            redisClient.del(`followers:${userId}`),
-            redisClient.del(`following:${userId}`),
-        ]);
+    // Invalidate all relevant caches when follow data changes
+    private async invalidateFollowCache(followerId: string, userId: string) {
+        // Invalidate followers cache for the user being followed
+        await invalidateCache(this.getFollowersKey(userId));
+
+        // Invalidate following cache for the follower
+        await invalidateCache(this.getFollowingKey(followerId));
+
+        // Invalidate the isFollowing status
+        await invalidateCache(this.getIsFollowingKey(followerId, userId));
     }
 }
 

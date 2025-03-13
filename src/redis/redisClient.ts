@@ -19,4 +19,9 @@ redisClient.on("error", err => {
     }
 })();
 
-export {redisClient};
+const invalidateCache = async (key: string) => {
+    logger.debug(`Invalidating cache for ${key}`);
+    await redisClient.del(key);
+}
+
+export {redisClient, invalidateCache};

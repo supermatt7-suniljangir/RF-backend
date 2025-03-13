@@ -2,12 +2,21 @@ import DbService from "./";
 import Bookmark from "../models/others/bookmark.model";
 import {IBookmark} from "../types/others";
 import Project from "../models/project/project.model";
-import {redisClient} from "../redis/redisClient";
+import {redisClient, invalidateCache} from "../redis/redisClient";
 import logger from "../config/logger";
 
 class BookmarkService {
     private dbService = new DbService<IBookmark>(Bookmark);
     private CACHE_EXPIRATION = 3600; // 1 hour
+
+    // Generic cache key methods
+    private getUserBookmarksKey(userId: string): string {
+        return `bookmarks:${userId}`;
+    }
+
+    private getBookmarkStatusKey(userId: string, projectId: string): string {
+        return `bookmark:${userId}:${projectId}`;
+    }
 
     // Toggle bookmark
     async toggleBookmark(userId: string, projectId: string) {
@@ -17,16 +26,18 @@ class BookmarkService {
             logger.debug(`Removing bookmark for user bookmark on a project`);
             await this.dbService.delete(bookmarkExists._id);
 
-            // Invalidate cache since data has changed
-            await this.invalidateCache(userId);
+            // Invalidate caches since data has changed
+            await invalidateCache(this.getUserBookmarksKey(userId));
+            await invalidateCache(this.getBookmarkStatusKey(userId, projectId));
 
             return {bookmarked: false};
         } else {
             logger.debug(`Creating bookmark for user bookmark`);
             const newBookmark = await this.dbService.create({userId, projectId});
 
-            // Invalidate cache since data has changed
-            await this.invalidateCache(userId);
+            // Invalidate caches since data has changed
+            await invalidateCache(this.getUserBookmarksKey(userId));
+            await invalidateCache(this.getBookmarkStatusKey(userId, projectId));
 
             return {bookmarked: true, bookmark: newBookmark};
         }
@@ -34,7 +45,7 @@ class BookmarkService {
 
     // Get user bookmarks
     async getUserBookmarks(userId: string) {
-        const cacheKey = `bookmarks:${userId}`;
+        const cacheKey = this.getUserBookmarksKey(userId);
 
         // Try fetching from cache
         const cachedData = await redisClient.get(cacheKey);
@@ -75,7 +86,7 @@ class BookmarkService {
 
     // Check if user has bookmarked a project
     async hasUserBookmarkedProject(userId: string, projectId: string) {
-        const cacheKey = `bookmark:${userId}:${projectId}`;
+        const cacheKey = this.getBookmarkStatusKey(userId, projectId);
 
         // Try fetching from cache
         const cachedValue = await redisClient.get(cacheKey);
@@ -94,12 +105,6 @@ class BookmarkService {
         logger.debug(`Cached result for checking user bookmark for a project`);
 
         return isBookmarked;
-    }
-
-    // Invalidate user bookmarks cache when data changes
-    private async invalidateCache(userId: string) {
-        logger.debug(`Invalidating cache for  bookmarks service`);
-        await redisClient.del(`bookmarks:${userId}`);
     }
 }
 

@@ -3,12 +3,17 @@ import Comment from "../models/others/comments.model";
 import Project from "../models/project/project.model";
 import User from "../models/user/user.model";
 import {IComment} from "../types/others";
-import {redisClient} from "../redis/redisClient";
+import {redisClient, invalidateCache} from "../redis/redisClient";
 import logger from "../config/logger";
 
 class CommentService {
     private dbService = new DbService<IComment>(Comment);
     private CACHE_EXPIRATION = 3600; // 1 hour
+
+    // Cache key generation method
+    private getCommentsKey(projectId: string): string {
+        return `comments:${projectId}`;
+    }
 
     // Add a comment to a project
     async addComment(projectId: string, userId: string, content: string) {
@@ -32,14 +37,14 @@ class CommentService {
         await project.save();
 
         // Invalidate cache since data has changed
-        await this.invalidateCache(projectId);
+        await invalidateCache(this.getCommentsKey(projectId));
 
         return comment;
     }
 
     // Get all comments for a project
     async getComments(projectId: string) {
-        const cacheKey = `comments:${projectId}`;
+        const cacheKey = this.getCommentsKey(projectId);
 
         // Try fetching from cache
         const cachedData = await redisClient.get(cacheKey);
@@ -76,15 +81,9 @@ class CommentService {
         await project.save();
 
         // Invalidate cache since data has changed
-        await this.invalidateCache(projectId);
+        await invalidateCache(this.getCommentsKey(projectId));
 
         return true;
-    }
-
-    // Invalidate project comments cache when data changes
-    private async invalidateCache(projectId: string) {
-        logger.debug("Invalidating cache for project comments");
-        await redisClient.del(`comments:${projectId}`);
     }
 }
 
