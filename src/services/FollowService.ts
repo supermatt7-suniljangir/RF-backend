@@ -1,92 +1,176 @@
-import { Types } from "mongoose";
+import {Types} from "mongoose";
 import DbService from "./";
 import Follow from "../models/others/follow.model";
 import User from "../models/user/user.model";
-import { IFollow } from "../types/others";
+import {IFollow} from "../types/others";
+import {redisClient} from "../redis/redisClient";
+import logger from "../config/logger";
 
 class FollowService {
-  private dbService = new DbService<IFollow>(Follow);
+    private dbService = new DbService<IFollow>(Follow);
+    private CACHE_EXPIRATION = 3600; // 1 hour
 
-  // Toggle follow/unfollow a user
-  async toggleFollow(followerId: string, userId: string) {
-    if (userId === followerId) {
-      throw new Error("You cannot follow yourself");
+    // Toggle follow/unfollow a user
+    async toggleFollow(followerId: string, userId: string) {
+        if (userId === followerId) {
+            throw new Error("You cannot follow yourself");
+        }
+
+        const followedUser = await User.findById(
+            userId,
+            "fullName profile.avatar followersCount"
+        );
+        const followerUser = await User.findById(
+            followerId,
+            "fullName profile.avatar followingCount"
+        );
+
+        if (!followedUser || !followerUser) {
+            throw new Error("User not found");
+        }
+
+        const existingFollow = await this.dbService.findOne({
+            "follower.userId": followerId,
+            "following.userId": userId,
+        });
+
+        if (existingFollow) {
+            await this.dbService.delete(existingFollow._id);
+            followedUser.followersCount = Math.max(
+                0,
+                followedUser.followersCount - 1
+            );
+            followerUser.followingCount = Math.max(
+                0,
+                followerUser.followingCount - 1
+            );
+
+            await Promise.all([followedUser.save(), followerUser.save()]);
+
+            // Invalidate cache since data changed
+            await this.invalidateCache(followerId);
+            await this.invalidateCache(userId);
+
+            return {followed: false};
+        }
+
+        await this.dbService.create({
+            follower: {
+                userId: followerId,
+                fullName: followerUser.fullName,
+                avatar: followerUser.profile?.avatar,
+            },
+            following: {
+                userId,
+                fullName: followedUser.fullName,
+                avatar: followedUser.profile?.avatar,
+            },
+        });
+
+        followedUser.followersCount += 1;
+        followerUser.followingCount += 1;
+        await Promise.all([followedUser.save(), followerUser.save()]);
+
+        // Invalidate cache since data changed
+        await this.invalidateCache(followerId);
+        await this.invalidateCache(userId);
+
+        return {followed: true};
     }
 
-    const followedUser = await User.findById(
-      userId,
-      "fullName profile.avatar followersCount"
-    );
-    const followerUser = await User.findById(
-      followerId,
-      "fullName profile.avatar followingCount"
-    );
+    // Fetch followers of a user
+    async getFollowers(userId: string) {
+        const cacheKey = `followers:${userId}`;
 
-    if (!followedUser || !followerUser) {
-      throw new Error("User not found");
+        // Try fetching from cache
+        const cachedData = await redisClient.get(cacheKey);
+        if (cachedData) {
+            logger.debug(`Cache hit for followers`);
+            return JSON.parse(cachedData);
+        }
+
+        logger.debug(`Cache miss for followers`);
+
+        // Cache miss → Fetch from DB
+        const followers = await Follow.find({"following.userId": userId})
+            .select("follower followedAt")
+            .lean();
+
+        // Store in cache
+        await redisClient.set(cacheKey, JSON.stringify(followers), {
+            EX: this.CACHE_EXPIRATION,
+        });
+
+        logger.debug(`Cached followers`);
+
+        return followers;
     }
 
-    const existingFollow = await this.dbService.findOne({
-      "follower.userId": followerId,
-      "following.userId": userId,
-    });
+    // Fetch users a user is following
+    async getFollowing(userId: string) {
+        const cacheKey = `following:${userId}`;
 
-    if (existingFollow) {
-      await this.dbService.delete(existingFollow._id);
-      followedUser.followersCount = Math.max(
-        0,
-        followedUser.followersCount - 1
-      );
-      followerUser.followingCount = Math.max(
-        0,
-        followerUser.followingCount - 1
-      );
-      await Promise.all([followedUser.save(), followerUser.save()]);
-      return { followed: false };
+        // Try fetching from cache
+        const cachedData = await redisClient.get(cacheKey);
+        if (cachedData) {
+            logger.debug(`Cache hit for following`);
+            return JSON.parse(cachedData);
+        }
+
+        logger.debug(`Cache miss for following`);
+
+        // Cache miss → Fetch from DB
+        const following = await Follow.find({"follower.userId": userId})
+            .select("following followedAt")
+            .lean();
+
+        // Store in cache
+        await redisClient.set(cacheKey, JSON.stringify(following), {
+            EX: this.CACHE_EXPIRATION,
+        });
+
+        logger.debug(`Cached following`);
+
+        return following;
     }
 
-    await this.dbService.create({
-      follower: {
-        userId: followerId,
-        fullName: followerUser.fullName,
-        avatar: followerUser.profile?.avatar,
-      },
-      following: {
-        userId,
-        fullName: followedUser.fullName,
-        avatar: followedUser.profile?.avatar,
-      },
-    });
+    // Check if a user is following another user
+    async isFollowing(followerId: string, userId: string) {
+        const cacheKey = `following:${followerId}:${userId}`;
 
-    followedUser.followersCount += 1;
-    followerUser.followingCount += 1;
-    await Promise.all([followedUser.save(), followerUser.save()]);
+        // Try fetching from cache
+        const cachedValue = await redisClient.get(cacheKey);
+        if (cachedValue !== null) {
+            logger.debug(`Cache hit for isFollowing`);
+            return cachedValue === "true";
+        }
 
-    return { followed: true };
-  }
+        logger.debug(`Cache miss for isFollowing`);
 
-  // Fetch followers of a user
-  async getFollowers(userId: string) {
-    return Follow.find({ "following.userId": userId })
-      .select("follower followedAt")
-      .lean();
-  }
+        const exists = await this.dbService.exists({
+            "follower.userId": followerId,
+            "following.userId": userId,
+        });
+        const isFollowing = !!exists;
 
-  // Fetch users a user is following
-  async getFollowing(userId: string) {
-    return Follow.find({ "follower.userId": userId })
-      .select("following followedAt")
-      .lean();
-  }
+        // Store in cache
+        await redisClient.set(cacheKey, isFollowing ? "true" : "false", {
+            EX: this.CACHE_EXPIRATION,
+        });
 
-  // Check if a user is following another user
-  async isFollowing(followerId: string, userId: string) {
-    const exists = await this.dbService.exists({
-      "follower.userId": followerId,
-      "following.userId": userId,
-    });
-    return !!exists;
-  }
+        logger.debug(`Cached isFollowing`);
+
+        return isFollowing;
+    }
+
+    // Invalidate cache when data changes
+    private async invalidateCache(userId: string) {
+        logger.debug(`Invalidating cache for followSchema`);
+        await Promise.all([
+            redisClient.del(`followers:${userId}`),
+            redisClient.del(`following:${userId}`),
+        ]);
+    }
 }
 
 export default new FollowService();
