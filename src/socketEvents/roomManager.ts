@@ -1,6 +1,6 @@
-import { Socket } from "socket.io";
+import {Socket} from "socket.io";
 import logger from "../config/logger";
-import { createConversationID } from "../utils/createConversationID";
+import {createConversationID} from "../utils/createConversationID";
 import redis from "../utils/redis";
 
 /**
@@ -17,10 +17,9 @@ export const joinConversation = async (socket: Socket, userId: string): Promise<
 
         const conversationId = createConversationID(senderUserId, userId);
         socket.join(`chat:${conversationId}`);
-        logger.info(`Socket ${socket.id} joined room chat:${conversationId}`);
 
         return conversationId;
-    } catch (error:any) {
+    } catch (error: any) {
         logger.error(`joinConversation failed: ${error.message}`);
         throw new Error("Failed to join conversation");
     }
@@ -33,8 +32,7 @@ export const leaveConversation = async (socket: Socket, userId: string): Promise
 
         const conversationId = createConversationID(senderUserId, userId);
         socket.leave(`chat:${conversationId}`);
-        logger.info(`Socket ${socket.id} left room chat:${conversationId}`);
-    } catch (error:any) {
+    } catch (error: any) {
         logger.error(`leaveConversation failed: ${error.message}`);
         throw new Error("Failed to leave conversation");
     }

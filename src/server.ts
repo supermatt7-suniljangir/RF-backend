@@ -20,8 +20,7 @@ const initializeServer = async () => {
         // Step 2: Create an HTTP server and attach the Express app
         const server = http.createServer(app);
 
-        // Step 3: Initialize Socket.IO with CORS configuration
-        const {origin, credentials} = getCorsConfig();
+
         const io = new Server(server, {
             cors: getCorsConfig(),
         });
@@ -32,7 +31,7 @@ const initializeServer = async () => {
         // Step 5: Start the server and listen on the specified port
         server.listen(PORT, () => {
             logger.info(
-              `Server running in ${process.env.NODE_ENV} mode on port ${PORT}`
+                `Server running in ${process.env.NODE_ENV} mode on port ${PORT}`
             );
         });
 

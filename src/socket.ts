@@ -1,8 +1,8 @@
-import { Server } from "socket.io";
+import {Server} from "socket.io";
 import logger from "./config/logger";
 import redis from "./utils/redis";
-import { handleSendMessage } from "./socketEvents/sendMessage";
-import { registerConversationEvents } from "./socketEvents/conversationEvents";
+import {handleSendMessage} from "./socketEvents/sendMessage";
+import {registerConversationEvents} from "./socketEvents/conversationEvents";
 
 /**
  * initializeSocket Function
@@ -22,18 +22,17 @@ export const initializeSocket = (io: Server) => {
                 socket.data.ready = true;
                 registerConversationEvents(socket, io);
                 socket.emit("ready");
-                logger.info(`Socket ${socket.id} registered for user ${userId}`);
             } catch (error) {
                 logger.error(`Error registering user ${userId}: ${error}`);
-                socket.emit("error", { message: "Failed to register with server" });
+                socket.emit("error", {message: "Failed to register with server"});
             }
         });
 
 
         // Handle direct message events (wait until socket is ready)
-        socket.on("sendMessage", ({ to, text }) => {
+        socket.on("sendMessage", ({to, text}) => {
             if (!socket.data.ready) {
-                socket.emit("error", { message: "Socket not ready" });
+                socket.emit("error", {message: "Socket not ready"});
                 return;
             }
             handleSendMessage(socket, io, to, text);

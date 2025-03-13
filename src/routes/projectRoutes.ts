@@ -18,5 +18,7 @@ router.put("/:id", limiters.intense, auth, validateProject, ProjectController.up
 
 // User project routes with different rate limits
 router.get("/:userId/user", limiters.standard, optionalAuth, ProjectController.getProjectsByUser);
+router.delete("/:id", limiters.standard, auth, ProjectController.deleteProject);
+
 
 export default router;
