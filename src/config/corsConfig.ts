@@ -14,12 +14,12 @@ import {STAGES} from "../utils/stages";
  *
  * @returns {Object} - CORS configuration object.
  */
-export const getCorsConfig = () => {
+export const getCorsConfig = (): object => {
     const isProduction = process.env.NODE_ENV === STAGES.PROD;
-
+    const CORS_ORIGIN = process.env.CORS_ORIGIN;
     return {
         origin: isProduction
-            ? [process.env.CORS_ORIGIN] // Production domains
+            ? [CORS_ORIGIN] // Production domains
             : ["http://localhost:5173"], // Development domain
         credentials: true, // Allow credentials (e.g., cookies)
         methods: ["GET", "POST", "PUT", "DELETE", "PATCH"], // Allowed HTTP methods
