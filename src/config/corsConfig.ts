@@ -19,7 +19,7 @@ export const getCorsConfig = () => {
 
     return {
         origin: isProduction
-            ? ["https://yourdomain.com", "https://www.yourdomain.com"] // Production domains
+            ? [process.env.CORS_ORIGIN] // Production domains
             : ["http://localhost:5173"], // Development domain
         credentials: true, // Allow credentials (e.g., cookies)
         methods: ["GET", "POST", "PUT", "DELETE", "PATCH"], // Allowed HTTP methods
