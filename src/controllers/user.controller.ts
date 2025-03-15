@@ -7,6 +7,7 @@ import generateToken from "../utils/generateToken";
 import {AppError, success} from "../utils/responseTypes";
 import UserService from "../services/UserService";
 import {STAGES} from "../utils/stages";
+import User from "../models/user/user.model";
 
 class UserController {
     static async getUserProfile(
@@ -188,7 +189,7 @@ class UserController {
             // Handle other top-level fields
             Object.keys(req.body).forEach((field) => {
                 if (
-                    field in user!.schema.paths &&
+                    field in User.schema.paths &&
                     field !== "password" &&
                     field !== "profile" &&
                     field !== "email" &&
