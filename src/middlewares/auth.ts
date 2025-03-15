@@ -36,7 +36,7 @@ export const optionalAuth = (
 
 export const auth = (req: Request, res: Response, next: NextFunction): void => {
     const token = req.cookies.auth_token;
-
+    logger.info(`auth middleware - token: ${token}`);
     if (!token) {
         res.status(401);
         return next(new AppError("AUTH_REQUIRED", 401));
@@ -82,16 +82,3 @@ export const auth = (req: Request, res: Response, next: NextFunction): void => {
 };
 
 
-// Role Checking Middleware
-export const checkRole = (roles: string[]) => {
-    return (req: Request, res: Response, next: NextFunction): void => {
-        if (!req.user || !req.user.role) {
-            return next(new AppError("Authentication required", 401));
-        }
-
-        if (!roles.includes(req.user.role)) {
-            return next(new AppError("Insufficient permissions, action denied", 403));
-        }
-        next();
-    };
-};

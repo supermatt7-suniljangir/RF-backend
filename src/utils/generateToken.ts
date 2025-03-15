@@ -12,12 +12,13 @@ const generateToken = (res: Response, _id: any): string => {
         // Update this in your generateToken function
         res.cookie("auth_token", token, {
             httpOnly: true,
-            sameSite: "strict",
+            sameSite: "none",  // Change from "strict" to "none"
+            secure: process.env.NODE_ENV === STAGES.PROD,
             maxAge: 30 * 24 * 60 * 60 * 1000,
             path: "/",
-            secure: process.env.NODE_ENV === STAGES.PROD,
-            domain: ".radiatorforge.suniljangir.site"  // Note the leading dot
+            domain: ".suniljangir.site"  // Fixed domain value
         });
+
 
         return token;
     } catch (error) {
