@@ -18,7 +18,9 @@ export const getCorsConfig = (): object => {
     const isProduction = process.env.NODE_ENV === STAGES.PROD;
     const CORS_ORIGIN = process.env.CORS_ORIGIN;
     return {
-        origin: [CORS_ORIGIN, "http://localhost:5173", "https://radiatorforge.suniljangir.site"], // Production domains
+        origin: isProduction ?
+            ["https://www.radiatorforge.suniljangir.site", "https://radiatorforge.suniljangir.site"]
+            : ["http://localhost:5173"],
         credentials: true, // Allow credentials (e.g., cookies)
         methods:
             ["GET", "POST", "PUT", "DELETE", "PATCH"], // Allowed HTTP methods
