@@ -74,7 +74,6 @@ app.use((req, res, next) => {
     const start = Date.now(); // Start timing the request
     // Log response details when the request finishes
     res.on("finish", () => {
-        console.log(`${cookies}${req.cookies}`);
         const duration = Date.now() - start; // Calculate response duration
         const statusCode = res.statusCode; // Capture the status code
         const logMessage = `${req.method}  ${originalUrl} → ${statusCode} (${duration}ms)`; // Create log message
