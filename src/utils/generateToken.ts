@@ -9,12 +9,14 @@ const generateToken = (res: Response, _id: any): string => {
         const token = jwt.sign({_id}, process.env.JWT_SECRET as string, {
             expiresIn: "29d",
         });
+        // Update this in your generateToken function
         res.cookie("auth_token", token, {
             httpOnly: true,
             sameSite: "strict",
             maxAge: 30 * 24 * 60 * 60 * 1000,
             path: "/",
             secure: process.env.NODE_ENV === STAGES.PROD,
+            domain: ".radiatorforge.suniljangir.site"  // Note the leading dot
         });
 
         return token;
