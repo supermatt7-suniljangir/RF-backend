@@ -37,6 +37,7 @@ const app = express();
  */
 
 app.use(cors(getCorsConfig()));
+app.set("trust proxy", 1);
 
 /**
  * Middleware Setup

@@ -12,7 +12,7 @@ const generateToken = (res: Response, _id: any): string => {
         // Update this in your generateToken function
         res.cookie("auth_token", token, {
             httpOnly: true,
-            sameSite: "none",  // Change from "strict" to "none"
+            sameSite: "none",
             secure: process.env.NODE_ENV === STAGES.PROD,
             maxAge: 30 * 24 * 60 * 60 * 1000,
             path: "/",
