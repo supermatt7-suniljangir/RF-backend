@@ -23,7 +23,6 @@ class BookmarkService {
         const bookmarkExists = await this.dbService.findOne({userId, projectId});
 
         if (bookmarkExists) {
-            logger.debug(`Removing bookmark for user bookmark on a project`);
             await this.dbService.delete(bookmarkExists._id);
 
             // Invalidate caches since data has changed
@@ -32,7 +31,6 @@ class BookmarkService {
 
             return {bookmarked: false};
         } else {
-            logger.debug(`Creating bookmark for user bookmark`);
             const newBookmark = await this.dbService.create({userId, projectId});
 
             // Invalidate caches since data has changed
@@ -51,11 +49,9 @@ class BookmarkService {
         const cachedData = await redisClient.get(cacheKey);
         if (cachedData) {
             console.log(JSON.parse(cachedData))
-            logger.debug(`Cache hit for user bookmarks`);
             return JSON.parse(cachedData);
         }
 
-        logger.debug(`Cache miss for user bookmarks, fetching from DB`);
 
         // Cache miss → Fetch from DB
         const bookmarks = await this.dbService.findAll({userId}, "projectId");
@@ -79,7 +75,6 @@ class BookmarkService {
 
         // Store in cache
         await redisClient.set(cacheKey, JSON.stringify(projects), {EX: this.CACHE_EXPIRATION});
-        logger.debug(`Cached user bookmarks`);
 
         return projects;
     }
@@ -91,18 +86,15 @@ class BookmarkService {
         // Try fetching from cache
         const cachedValue = await redisClient.get(cacheKey);
         if (cachedValue !== null) {
-            logger.debug(`Cache hit for user bookmarks`);
             return cachedValue === 'true';
         }
 
-        logger.debug(`Cache miss for checking user bookmark for a project, checking DB`);
 
         const bookmark = await this.dbService.findOne({userId, projectId});
         const isBookmarked = !!bookmark;
 
         // Store in cache
         await redisClient.set(cacheKey, isBookmarked ? 'true' : 'false', {EX: this.CACHE_EXPIRATION});
-        logger.debug(`Cached result for checking user bookmark for a project`);
 
         return isBookmarked;
     }

@@ -77,20 +77,20 @@ app.use((req, res, next) => {
         const duration = Date.now() - start; // Calculate response duration
         const statusCode = res.statusCode; // Capture the status code
         const logMessage = `${req.method}  ${originalUrl} → ${statusCode} (${duration}ms)`; // Create log message
-        const logData = {
-            method: req.method,
-            url: originalUrl,
-            statusCode: statusCode,
-            duration,
-        };
+        // const logData = {
+        //     method: req.method,
+        //     url: originalUrl,
+        //     statusCode: statusCode,
+        //     duration,
+        // };
 
         // Log based on status code severity
         if (statusCode >= 500) {
-            logger.error(logMessage, logData); // Server errors
+            logger.error(logMessage); // Server errors
         } else if (statusCode >= 400) {
-            logger.warn(logMessage, logData); // Client errors
+            logger.warn(logMessage); // Client errors
         } else {
-            logger.info(logMessage, logData); // Successful responses
+            logger.info(logMessage); // Successful responses
         }
     });
 

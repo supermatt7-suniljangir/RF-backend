@@ -20,7 +20,6 @@ redisClient.on("error", err => {
 })();
 
 const invalidateCache = async (key: string) => {
-    logger.debug(`Invalidating cache for ${key}`);
     await redisClient.del(key);
 }
 

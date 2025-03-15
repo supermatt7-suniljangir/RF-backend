@@ -25,11 +25,9 @@ class MessageService {
         // Try fetching from cache
         const cachedData = await redisClient.get(cacheKey);
         if (cachedData) {
-            logger.debug(`Cache hit for messages between ${userId} and ${receiverId}`);
             return JSON.parse(cachedData);
         }
 
-        logger.debug(`Cache miss for messages between ${userId} and ${receiverId}, fetching from DB`);
         const [messages, total] = await Promise.all([
             Message.find({
                 $or: [
@@ -53,7 +51,6 @@ class MessageService {
 
         // Store in cache
         await redisClient.set(cacheKey, JSON.stringify({messages, total}), {EX: this.MESSAGE_CACHE_EXPIRATION});
-        logger.debug(`Cached messages between ${userId} and ${receiverId}`);
 
         return {messages, total};
     }
@@ -67,11 +64,10 @@ class MessageService {
         // Try fetching from cache
         const cachedData = await redisClient.get(cacheKey);
         if (cachedData) {
-            logger.debug(`Cache hit for recent conversations of ${userId}`);
+            logger.debug('cache hit for conversations');
             return JSON.parse(cachedData);
         }
 
-        logger.debug(`Cache miss for recent conversations of ${userId}, fetching from DB`);
         const conversations = await Message.aggregate([
             {
                 $match: {
@@ -122,7 +118,6 @@ class MessageService {
 
         // Store in cache
         await redisClient.set(cacheKey, JSON.stringify(refinedConversations), {EX: this.CONVERSATION_CACHE_EXPIRATION});
-        logger.debug(`Cached recent conversations for ${userId}`);
 
         return refinedConversations;
     }

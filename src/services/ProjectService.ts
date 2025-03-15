@@ -37,7 +37,6 @@ class ProjectService {
 
         // Invalidate cache since data has changed
         await invalidateCache(this.getUserProjectsKey(userId));
-        logger.debug(`Created project. Cache invalidated for ${this.getUserProjectsKey(userId)}`);
 
         return project;
     }
@@ -54,7 +53,6 @@ class ProjectService {
         // Invalidate cache since project data has changed
         await invalidateCache(this.getProjectKey(projectId));
         await invalidateCache(this.getUserProjectsKey(project.creator.toString()));
-        logger.debug(`Updated project ${projectId}. Cache invalidated`);
 
         return project;
     }
@@ -66,11 +64,9 @@ class ProjectService {
         // Try fetching from cache
         const cachedData = await redisClient.get(cacheKey);
         if (cachedData) {
-            logger.debug(`Cache hit for project ${projectId}`);
             return JSON.parse(cachedData);
         }
 
-        logger.debug(`Cache miss for project ${projectId}, fetching from DB`);
 
         const project = await Project.findById(projectId)
             .populate({
@@ -98,7 +94,6 @@ class ProjectService {
 
         // Cache project data
         await redisClient.set(cacheKey, JSON.stringify(project), {EX: this.CACHE_EXPIRATION});
-        logger.debug(`Cached project ${projectId}`);
 
         return project;
     }
@@ -110,7 +105,6 @@ class ProjectService {
         // Try fetching from cache
         const cachedData = await redisClient.get(cacheKey);
         if (cachedData) {
-            logger.debug(`Cache hit for ownership check on project ${projectId}`);
             return JSON.parse(cachedData);
         }
 
@@ -123,7 +117,6 @@ class ProjectService {
 
         // Cache ownership data
         await redisClient.set(cacheKey, JSON.stringify(isOwner), {EX: this.CACHE_EXPIRATION});
-        logger.debug(`Cached ownership for project ${projectId}`);
 
         return isOwner;
     }
@@ -135,11 +128,9 @@ class ProjectService {
         // Try fetching from cache
         const cachedData = await redisClient.get(cacheKey);
         if (cachedData) {
-            logger.debug(`Cache hit for published projects`);
             return JSON.parse(cachedData);
         }
 
-        logger.debug(`Cache miss for published projects, fetching from DB`);
 
         const projects = await Project.find({status: "published"})
             .select("title thumbnail stats creator featured publishedAt status")
@@ -152,7 +143,6 @@ class ProjectService {
 
         // Cache published projects
         await redisClient.set(cacheKey, JSON.stringify(projects), {EX: this.CACHE_EXPIRATION});
-        logger.debug(`Cached published projects`);
 
         return projects;
     }
@@ -170,11 +160,9 @@ class ProjectService {
         // Try fetching from cache
         const cachedData = await redisClient.get(cacheKey);
         if (cachedData) {
-            logger.debug(`Cache hit for projects by user ${userId}`);
             return JSON.parse(cachedData);
         }
 
-        logger.debug(`Cache miss for projects by user ${userId}, fetching from DB`);
 
         const projects = await Project.find({
             creator: validatedUserId,
@@ -193,7 +181,6 @@ class ProjectService {
 
         // Cache user projects
         await redisClient.set(cacheKey, JSON.stringify(projects), {EX: this.CACHE_EXPIRATION});
-        logger.debug(`Cached projects for user ${userId}`);
 
         return projects;
     }
@@ -211,7 +198,6 @@ class ProjectService {
         // Invalidate cache since data has changed
         await invalidateCache(this.getProjectKey(projectId));
         await invalidateCache(this.getUserProjectsKey(userId));
-        logger.debug(`Deleted project ${projectId}. Cache invalidated`);
 
         return true;
     }

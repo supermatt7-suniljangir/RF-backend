@@ -38,7 +38,6 @@ class LikesService {
     });
 
     if (existingLike) {
-      logger.debug(`Removing like from project`);
       await this.dbService.delete(existingLike._id);
       project.stats.likes = Math.max(0, project.stats.likes - 1);
       await project.save();
@@ -49,7 +48,6 @@ class LikesService {
       return {liked: false};
     }
 
-    logger.debug(`Adding like to project`);
     await this.dbService.create({
       projectId,
       likedBy: {
@@ -74,15 +72,12 @@ class LikesService {
 
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
-      logger.debug(`Cache hit for project likes`);
       return JSON.parse(cachedData);
     }
 
-    logger.debug(`Cache miss for project likes, fetching from DB`);
     const likes = await this.dbService.findAll({projectId});
 
     await redisClient.set(cacheKey, JSON.stringify(likes), {EX: this.CACHE_EXPIRATION});
-    logger.debug(`Cached project likes`);
 
     return likes;
   }
@@ -93,11 +88,9 @@ class LikesService {
 
     const cachedValue = await redisClient.get(cacheKey);
     if (cachedValue !== null) {
-      logger.debug(`Cache hit for user like status`);
       return cachedValue === 'true';
     }
 
-    logger.debug(`Cache miss for user like status, checking DB`);
     const like = await this.dbService.findOne({
       projectId,
       "likedBy.userId": userId,
@@ -105,7 +98,6 @@ class LikesService {
 
     const isLiked = !!like;
     await redisClient.set(cacheKey, isLiked ? 'true' : 'false', {EX: this.CACHE_EXPIRATION});
-    logger.debug(`Cached user like status`);
 
     return isLiked;
   }
@@ -116,11 +108,9 @@ class LikesService {
 
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
-      logger.debug(`Cache hit for user liked projects`);
       return JSON.parse(cachedData);
     }
 
-    logger.debug(`Cache miss for user liked projects, fetching from DB`);
     const likedProjects = await this.dbService.findAll(
         {"likedBy.userId": userId},
         "projectId"
@@ -143,7 +133,6 @@ class LikesService {
         .lean();
 
     await redisClient.set(cacheKey, JSON.stringify(projects), {EX: this.CACHE_EXPIRATION});
-    logger.debug(`Cached user liked projects`);
 
     return projects;
   }

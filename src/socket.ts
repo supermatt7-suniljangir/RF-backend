@@ -15,6 +15,7 @@ export const initializeSocket = (io: Server) => {
 
         // Register user on connection
         socket.on("register", async (userId) => {
+            logger.info('the user id while registering is', userId);
             try {
                 socket.data.ready = false;
                 await redis.sadd(`userSockets:${userId}`, socket.id);
@@ -22,6 +23,7 @@ export const initializeSocket = (io: Server) => {
                 socket.data.ready = true;
                 registerConversationEvents(socket, io);
                 socket.emit("ready");
+                logger.info(`User ${userId} registered with socket ${socket.id}`);
             } catch (error) {
                 logger.error(`Error registering user ${userId}: ${error}`);
                 socket.emit("error", {message: "Failed to register with server"});
@@ -35,6 +37,7 @@ export const initializeSocket = (io: Server) => {
                 socket.emit("error", {message: "Socket not ready"});
                 return;
             }
+            logger.debug(`recipentId: ${to}, text: ${text}`);
             handleSendMessage(socket, io, to, text);
         })
 

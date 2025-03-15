@@ -28,6 +28,7 @@ export const handleSendMessage = async (
 
         // ✅ Ensure the sender is part of the conversation room
         const conversationId = createConversationID(senderUserId, recipientId);
+        const isNewConversation = await MessageService.isNewConversation(conversationId);
         const isSenderInRoom = socket.rooms.has(`chat:${conversationId}`);
 
         if (!isSenderInRoom) {
@@ -35,7 +36,6 @@ export const handleSendMessage = async (
             await joinConversation(socket, recipientId); // Force join before sending
         }
 
-        const isNewConversation = await MessageService.isNewConversation(conversationId);
 
         // ✅ Save message to MongoDB
         const newMessage = await MessageService.addNewMessage({
@@ -58,13 +58,8 @@ export const handleSendMessage = async (
 
         // ✅ Revalidate recent conversations if it's a new conversation
         if (isNewConversation) {
-            logger.debug('Revalidating recent conversations for sender and recipient');
-
-            await Promise.all([
-                invalidateCache(`conversations:${senderUserId}`),
-                invalidateCache(`conversation:${recipientId}`),
-            ]);
-
+            await invalidateCache(`conversations:${senderUserId}`);
+            await invalidateCache(`conversations:${recipientId}`);
             // ✅ Emit "revalidateConversations" event to both users
             const recipientSockets = await redis.smembers(`userSockets:${recipientId}`);
             recipientSockets.forEach((socketId) => {

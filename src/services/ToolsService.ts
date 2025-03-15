@@ -20,7 +20,6 @@ class ToolService {
 
         // Invalidate cache since data has changed
         await invalidateCache(this.getToolsListKey());
-        logger.debug(`Created tool. Cache invalidated for tools list`);
 
         return tool;
     }
@@ -32,17 +31,14 @@ class ToolService {
         // Try fetching from cache
         const cachedData = await redisClient.get(cacheKey);
         if (cachedData) {
-            logger.debug(`Cache hit for tools list`);
             return JSON.parse(cachedData);
         }
 
-        logger.debug(`Cache miss for tools list, fetching from DB`);
 
         const tools = await Tool.find().lean();
 
         // Cache tools list
         await redisClient.set(cacheKey, JSON.stringify(tools), {EX: this.CACHE_EXPIRATION});
-        logger.debug(`Cached tools list`);
 
         return tools;
     }
@@ -54,18 +50,15 @@ class ToolService {
         // Try fetching from cache
         const cachedData = await redisClient.get(cacheKey);
         if (cachedData) {
-            logger.debug(`Cache hit for tool`);
             return JSON.parse(cachedData);
         }
 
-        logger.debug(`Cache miss for tool, fetching from DB`);
 
         const tool = await Tool.findById(toolId).lean();
         if (!tool) return null;
 
         // Cache tool data
         await redisClient.set(cacheKey, JSON.stringify(tool), {EX: this.CACHE_EXPIRATION});
-        logger.debug(`Cached tool data`);
 
         return tool;
     }
@@ -80,7 +73,6 @@ class ToolService {
         // Invalidate caches since data has changed
         await invalidateCache(this.getToolsListKey());
         await invalidateCache(this.getToolKey(toolId));
-        logger.debug(`Deleted tool. Caches invalidated`);
 
         return tool;
     }
@@ -98,7 +90,6 @@ class ToolService {
         // Invalidate caches since data has changed
         await invalidateCache(this.getToolsListKey());
         await invalidateCache(this.getToolKey(toolId));
-        logger.debug(`Updated tool. Caches invalidated`);
 
         return tool;
     }

@@ -6,6 +6,7 @@ import logger from "../config/logger";
 import generateToken from "../utils/generateToken";
 import {AppError, success} from "../utils/responseTypes";
 import UserService from "../services/UserService";
+import {STAGES} from "../utils/stages";
 
 class UserController {
     static async getUserProfile(
@@ -254,9 +255,10 @@ class UserController {
         try {
             res.clearCookie("auth_token", {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
+                secure: true,
                 sameSite: "none",
                 path: "/",
+                domain: process.env.NODE_ENV === STAGES.PROD ? ".radiatorforge.suniljangir.site" : undefined,
             });
 
             res.status(200).json(

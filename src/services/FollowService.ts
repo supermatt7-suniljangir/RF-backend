@@ -96,11 +96,9 @@ class FollowService {
         // Try fetching from cache
         const cachedData = await redisClient.get(cacheKey);
         if (cachedData) {
-            logger.debug(`Cache hit for followers`);
             return JSON.parse(cachedData);
         }
 
-        logger.debug(`Cache miss for followers`);
 
         // Cache miss → Fetch from DB
         const followers = await Follow.find({"following.userId": userId})
@@ -112,7 +110,6 @@ class FollowService {
             EX: this.CACHE_EXPIRATION,
         });
 
-        logger.debug(`Cached followers`);
 
         return followers;
     }
@@ -124,11 +121,9 @@ class FollowService {
         // Try fetching from cache
         const cachedData = await redisClient.get(cacheKey);
         if (cachedData) {
-            logger.debug(`Cache hit for following`);
             return JSON.parse(cachedData);
         }
 
-        logger.debug(`Cache miss for following`);
 
         // Cache miss → Fetch from DB
         const following = await Follow.find({"follower.userId": userId})
@@ -140,7 +135,6 @@ class FollowService {
             EX: this.CACHE_EXPIRATION,
         });
 
-        logger.debug(`Cached following`);
 
         return following;
     }
@@ -152,11 +146,9 @@ class FollowService {
         // Try fetching from cache
         const cachedValue = await redisClient.get(cacheKey);
         if (cachedValue !== null) {
-            logger.debug(`Cache hit for isFollowing`);
             return cachedValue === "true";
         }
 
-        logger.debug(`Cache miss for isFollowing`);
 
         const exists = await this.dbService.exists({
             "follower.userId": followerId,
@@ -169,7 +161,6 @@ class FollowService {
             EX: this.CACHE_EXPIRATION,
         });
 
-        logger.debug(`Cached isFollowing`);
 
         return isFollowing;
     }

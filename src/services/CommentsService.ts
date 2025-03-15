@@ -49,11 +49,9 @@ class CommentService {
         // Try fetching from cache
         const cachedData = await redisClient.get(cacheKey);
         if (cachedData) {
-            logger.debug("Cache hit for project comments");
             return JSON.parse(cachedData);
         }
 
-        logger.debug("Cache miss for project comments, fetching from DB");
 
         // Cache miss → Fetch from DB
         const comments = await Comment.find({projectId})
@@ -62,7 +60,6 @@ class CommentService {
 
         // Store in cache
         await redisClient.set(cacheKey, JSON.stringify(comments), {EX: this.CACHE_EXPIRATION});
-        logger.debug("Cached project comments");
 
         return comments;
     }
