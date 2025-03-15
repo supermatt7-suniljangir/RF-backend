@@ -16,7 +16,6 @@ const generateToken = (res: Response, _id: any): string => {
             secure: process.env.NODE_ENV === STAGES.PROD,
             maxAge: 30 * 24 * 60 * 60 * 1000,
             path: "/",
-            domain: ".suniljangir.site"  // Fixed domain value
         });
 
 

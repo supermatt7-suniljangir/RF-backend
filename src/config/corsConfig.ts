@@ -18,23 +18,26 @@ export const getCorsConfig = (): object => {
     const isProduction = process.env.NODE_ENV === STAGES.PROD;
     const CORS_ORIGIN = process.env.CORS_ORIGIN;
     return {
-        origin: isProduction
-            ? [CORS_ORIGIN, "http://localhost:5173"] // Production domains
-            : ["http://localhost:5173"], // Development domain
+        origin: [CORS_ORIGIN, "http://localhost:5173", "https://radiatorforge.suniljangir.site"], // Production domains
         credentials: true, // Allow credentials (e.g., cookies)
-        methods: ["GET", "POST", "PUT", "DELETE", "PATCH"], // Allowed HTTP methods
-        allowedHeaders: [
-            "X-CSRF-Token",
-            "X-Requested-With",
-            "Accept",
-            "Accept-Version",
-            "Content-Length",
-            "Content-MD5",
-            "Content-Type",
-            "Date",
-            "X-Api-Version",
-        ], // Allowed headers
-        exposedHeaders: ["set-cookie"], // Exposed headers
-        maxAge: 86400, // Preflight request cache duration (24 hours)
-    };
+        methods:
+            ["GET", "POST", "PUT", "DELETE", "PATCH"], // Allowed HTTP methods
+        allowedHeaders:
+            [
+                "X-CSRF-Token",
+                "X-Requested-With",
+                "Accept",
+                "Accept-Version",
+                "Content-Length",
+                "Content-MD5",
+                "Content-Type",
+                "Date",
+                "X-Api-Version",
+            ], // Allowed headers
+        exposedHeaders:
+            ["set-cookie"], // Exposed headers
+        maxAge:
+            86400, // Preflight request cache duration (24 hours)
+    }
+        ;
 };
