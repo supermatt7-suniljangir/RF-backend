@@ -65,7 +65,7 @@ export const initializeSocket = (io: Server) => {
   return {
     cleanup: () => {
       logger.info("Cleaning up socket connections...");
-      io.disconnectSockets();
+      io.sockets.sockets.forEach((socket) => socket.disconnect(true));
       redis.disconnect();
       logger.info("Socket cleanup completed.");
     },
