@@ -15,7 +15,7 @@ const FollowSchema = new Schema<IFollow>(
     },
     followedAt: { type: Date, default: Date.now },
   },
-  { timestamps: true, versionKey: false }
+  { timestamps: true, versionKey: false },
 );
 
 // Index to efficiently find who is following a specific user
@@ -27,7 +27,7 @@ FollowSchema.index({ "following.userId": 1 });
 // Compound index to avoid duplicate follow relationships
 FollowSchema.index(
   { "follower.userId": 1, "following.userId": 1 },
-  { unique: true }
+  { unique: true },
 );
 
 const Followe = model<IFollow>("Follower", FollowSchema);

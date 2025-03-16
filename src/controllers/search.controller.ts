@@ -15,7 +15,7 @@ class SearchController {
     limit?: number,
     sortBy: string = "followers",
     sortOrder: "asc" | "desc" = "desc",
-    filter?: "featured" | "isAvailableForHire"
+    filter?: "featured" | "isAvailableForHire",
   ): mongoose.PipelineStage[] {
     const matchStage: any = {
       $match: {
@@ -43,8 +43,8 @@ class SearchController {
           _id: { $toString: "$_id" },
           fullName: 1,
           email: 1,
-          followersCount:1,
-          followingCount:1,
+          followersCount: 1,
+          followingCount: 1,
           profile: {
             avatar: 1,
             profession: 1,
@@ -59,7 +59,7 @@ class SearchController {
   }
 
   private static buildProjectSearchQuery(
-    params: ProjectQueryParams
+    params: ProjectQueryParams,
   ): mongoose.FilterQuery<any> {
     const { query, category, tag, status = "published", filter } = params;
     const baseConditions: mongoose.FilterQuery<any> = { status };
@@ -114,7 +114,7 @@ class SearchController {
     skip?: number,
     limit?: number,
     sortBy = "publishedAt",
-    sortOrder: "asc" | "desc" = "desc"
+    sortOrder: "asc" | "desc" = "desc",
   ): mongoose.PipelineStage[] {
     const sortMapping: { [key: string]: string } = {
       title: "title",
@@ -174,14 +174,14 @@ class SearchController {
   static searchProjects = async (
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> => {
     try {
       const params = req.query as ProjectQueryParams;
       const { pageNumber, limitNumber, skip } = Pagination.normalizePagination(
         { page: params.page, limit: params.limit },
         20,
-        100
+        100,
       );
 
       const matchQuery = this.buildProjectSearchQuery(params);
@@ -200,8 +200,8 @@ class SearchController {
             skip,
             limitNumber,
             params.sortBy,
-            params.sortOrder
-          )
+            params.sortOrder,
+          ),
         ),
       ]);
 
@@ -210,7 +210,7 @@ class SearchController {
         projects,
         totalProjects,
         pageNumber,
-        limitNumber
+        limitNumber,
       );
       res.status(200).json(
         success({
@@ -218,7 +218,7 @@ class SearchController {
           message: projects.length
             ? "Projects found successfully"
             : "No projects found",
-        })
+        }),
       );
     } catch (error) {
       logger.error("Error searching projects:", error);
@@ -229,7 +229,7 @@ class SearchController {
   static searchUsers = async (
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> => {
     try {
       const { query, page, limit, sortBy, sortOrder, filter } =
@@ -243,7 +243,7 @@ class SearchController {
       const { pageNumber, limitNumber, skip } = Pagination.normalizePagination(
         { page, limit },
         20,
-        100
+        100,
       );
 
       const searchQuery = query.trim();
@@ -260,8 +260,8 @@ class SearchController {
             limitNumber,
             sortBy,
             sortOrder,
-            filter as "featured" | "isAvailableForHire"
-          )
+            filter as "featured" | "isAvailableForHire",
+          ),
         ),
       ]);
 
@@ -270,14 +270,14 @@ class SearchController {
         users,
         totalUsers,
         pageNumber,
-        limitNumber
+        limitNumber,
       );
 
       res.status(200).json(
         success({
           data: response,
           message: users.length ? "Users found successfully" : "No users found",
-        })
+        }),
       );
     } catch (error) {
       logger.error("Error searching users:", error);

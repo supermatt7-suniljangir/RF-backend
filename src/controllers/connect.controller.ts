@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { AppError, success } from "../utils/responseTypes";
 import logger from "../config/logger";
-import MessageService from "../services/MessageService";
+import ConnectService from "../services/ConnectService";
 import Pagination from "../utils/Pagination";
 
 class ConnectController {
@@ -32,7 +32,7 @@ class ConnectController {
       });
 
       // Fetch messages
-      const { messages, total } = await MessageService.getMessages(
+      const { messages, total } = await ConnectService.getMessages(
         user._id,
         recipient as string,
         skip,
@@ -72,7 +72,7 @@ class ConnectController {
     }
 
     try {
-      const conversations = await MessageService.getRecentConversations(
+      const conversations = await ConnectService.getRecentConversations(
         user._id,
       );
 
@@ -85,6 +85,39 @@ class ConnectController {
     } catch (error) {
       logger.error("Error fetching recent conversations:", error);
       next(new AppError("Error fetching recent conversations", 500));
+    }
+  }
+
+  /**
+   * Delete a conversation between two users.
+   */
+  /**
+   * Delete a conversation with a specific recipient.
+   */
+  static async deleteConversation(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    const { user } = req;
+    const { recipientId } = req.params;
+
+    if (!user || !recipientId) {
+      next(new AppError("Both user and recipient IDs are required", 400));
+      return;
+    }
+
+    try {
+      await ConnectService.deleteConversation(user._id, recipientId);
+
+      res.status(200).json(
+        success({
+          message: "Conversation deleted successfully",
+        }),
+      );
+    } catch (error) {
+      logger.error("Error deleting conversation:", error);
+      next(new AppError("Error deleting conversation", 500));
     }
   }
 }

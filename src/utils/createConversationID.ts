@@ -9,9 +9,9 @@
  * @returns string - A consistent conversation ID
  */
 export function createConversationID(userId1: string, userId2: string): string {
-    // Convert to string if they're ObjectIds
-    const id1 = userId1.toString();
-    const id2 = userId2.toString();
-    // Create a consistent ID regardless of order
-    return id1 < id2 ? `${id1}_${id2}` : `${id2}_${id1}`;
+  // Convert to string if they're ObjectIds
+  const id1 = userId1.toString();
+  const id2 = userId2.toString();
+  // Create a consistent ID regardless of order
+  return id1 < id2 ? `${id1}_${id2}` : `${id2}_${id1}`;
 }

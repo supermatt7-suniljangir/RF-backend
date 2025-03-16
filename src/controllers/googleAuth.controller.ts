@@ -49,7 +49,7 @@ const googleAuth = async (googleToken: string): Promise<UserDocument> => {
     // For other errors, wrap them in an AppError
     throw new AppError(
       error.message || "Google authentication failed",
-      error.status || 500
+      error.status || 500,
     );
   }
 };

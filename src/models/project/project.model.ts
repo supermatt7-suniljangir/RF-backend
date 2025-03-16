@@ -50,7 +50,7 @@ const ProjectSchema = new Schema<ProjectDocument>(
       commercialUse: { type: Boolean, default: false },
     },
   },
-  { timestamps: true, versionKey: false }
+  { timestamps: true, versionKey: false },
 );
 // Only essential indexes
 ProjectSchema.index({ status: 1, publishedAt: -1 }); // For listing published projects by date

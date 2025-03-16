@@ -8,7 +8,7 @@ class LikesController {
   static async toggleLikeProject(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const { projectId } = req.params;
@@ -20,7 +20,7 @@ class LikesController {
         success({
           data: liked,
           message: liked ? "Project liked" : "Project unliked",
-        })
+        }),
       );
     } catch (error: any) {
       logger.error("Error toggling like:", error);
@@ -32,7 +32,7 @@ class LikesController {
   static async fetchProjectLikes(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const { projectId } = req.params;
@@ -43,7 +43,7 @@ class LikesController {
         success({
           data: likes,
           message: "Likes fetched successfully",
-        })
+        }),
       );
     } catch (error: any) {
       logger.error("Error fetching project likes:", error);
@@ -55,7 +55,7 @@ class LikesController {
   static async hasUserLikedProject(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const { projectId } = req.params;
@@ -66,7 +66,7 @@ class LikesController {
           success({
             data: false,
             message: "User not logged in",
-          })
+          }),
         );
         return;
       }
@@ -79,7 +79,7 @@ class LikesController {
           message: hasLiked
             ? "User has liked the project"
             : "User has not liked the project",
-        })
+        }),
       );
     } catch (error: any) {
       logger.error("Error checking like status:", error);
@@ -91,7 +91,7 @@ class LikesController {
   static async fetchProjectsLikedByUser(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const { userId } = req.params;
@@ -116,7 +116,7 @@ class LikesController {
         success({
           data: projects,
           message: "Projects liked by the user fetched successfully",
-        })
+        }),
       );
     } catch (error: any) {
       logger.error("Error fetching projects liked by user:", error.message);

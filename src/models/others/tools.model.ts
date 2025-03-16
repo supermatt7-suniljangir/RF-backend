@@ -7,7 +7,7 @@ const ToolSchema = new Schema<ITools>(
     name: { type: String, required: true },
     icon: String,
   },
-  { timestamps: true, versionKey: false }
+  { timestamps: true, versionKey: false },
 );
 
 const Tool = model("Tool", ToolSchema);

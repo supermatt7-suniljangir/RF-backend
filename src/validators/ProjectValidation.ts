@@ -58,7 +58,7 @@ const ProjectSchema = z.object({
 export const validateProject = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<any> => {
   try {
     await ProjectSchema.parseAsync(req.body);

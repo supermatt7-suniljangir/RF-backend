@@ -17,7 +17,9 @@ interface SignedUrlResponse {
 }
 
 class UploadController {
-  private static async generateSignedUrlForFile(file: FileUploadRequest): Promise<SignedUrlResponse> {
+  private static async generateSignedUrlForFile(
+    file: FileUploadRequest,
+  ): Promise<SignedUrlResponse> {
     const { filename, contentType } = file;
     const fileExtension = filename.split(".").pop();
     const fileType = contentType.includes("video") ? "video" : "image";
@@ -36,11 +38,11 @@ class UploadController {
     return { uploadUrl, key: uniqueFilename };
   }
 
-  static  generateUploadUrls = async(
+  static generateUploadUrls = async (
     req: Request,
     res: Response,
-    next: NextFunction
-  ): Promise<void>=> {
+    next: NextFunction,
+  ): Promise<void> => {
     const { files } = req.body;
 
     if (!Array.isArray(files) || files.length === 0) {
@@ -51,20 +53,20 @@ class UploadController {
 
     try {
       const signedUrls = await Promise.all(
-        files.map(file => this.generateSignedUrlForFile(file))
+        files.map((file) => this.generateSignedUrlForFile(file)),
       );
 
       res.status(200).json(
         success({
           data: signedUrls,
           message: "Upload URLs generated successfully",
-        })
+        }),
       );
     } catch (error) {
       logger.error("Failed to generate upload URLs:", error);
       next(new AppError("Failed to generate upload URLs", 500));
     }
-  }
+  };
 }
 
 export default UploadController;

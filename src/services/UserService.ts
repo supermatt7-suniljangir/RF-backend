@@ -1,5 +1,3 @@
-
-
 import DbService from "./";
 import { FilterQuery, UpdateQuery } from "mongoose";
 import { UserDocument } from "../types/user";
@@ -35,12 +33,13 @@ class UserService {
       return JSON.parse(cachedData);
     }
 
-
     const user = await this.dbService.findById(id);
     if (!user) return null;
 
     // Cache user data
-    await redisClient.set(cacheKey, JSON.stringify(user), { EX: this.CACHE_EXPIRATION });
+    await redisClient.set(cacheKey, JSON.stringify(user), {
+      EX: this.CACHE_EXPIRATION,
+    });
 
     return user;
   }
@@ -62,12 +61,13 @@ class UserService {
       return JSON.parse(cachedData);
     }
 
-
     const user = await this.dbService.findOne({ email });
     if (!user) return null;
 
     // Cache user data
-    await redisClient.set(cacheKey, JSON.stringify(user), { EX: this.CACHE_EXPIRATION });
+    await redisClient.set(cacheKey, JSON.stringify(user), {
+      EX: this.CACHE_EXPIRATION,
+    });
 
     return user;
   }
@@ -79,14 +79,15 @@ class UserService {
     // Try fetching from cache
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData !== null) {
-      return cachedData === 'true';
+      return cachedData === "true";
     }
-
 
     const exists = await this.dbService.exists({ email });
 
     // Cache result
-    await redisClient.set(cacheKey, exists ? 'true' : 'false', { EX: this.CACHE_EXPIRATION });
+    await redisClient.set(cacheKey, exists ? "true" : "false", {
+      EX: this.CACHE_EXPIRATION,
+    });
 
     return exists;
   }
@@ -123,8 +124,9 @@ class UserService {
   // Fetch all users with optional filters
   async getAllUsers(filter: FilterQuery<UserDocument> = {}) {
     // Create a filter key for caching based on the filter object
-    const filterKey = Object.keys(filter).length > 0
-        ? Buffer.from(JSON.stringify(filter)).toString('base64')
+    const filterKey =
+      Object.keys(filter).length > 0
+        ? Buffer.from(JSON.stringify(filter)).toString("base64")
         : "";
 
     const cacheKey = this.getAllUsersKey(filterKey);
@@ -134,7 +136,6 @@ class UserService {
     if (cachedData) {
       return JSON.parse(cachedData);
     }
-
 
     const users = await this.dbService.findAll(filter);
 

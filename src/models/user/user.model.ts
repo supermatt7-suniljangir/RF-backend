@@ -11,7 +11,7 @@ const SocialSchema = new Schema<Social>(
     linkedin: { type: String },
     github: { type: String },
   },
-  { _id: false, versionKey: false }
+  { _id: false, versionKey: false },
 );
 
 const ProfileSchema = new Schema<Profile>(
@@ -24,7 +24,7 @@ const ProfileSchema = new Schema<Profile>(
     profession: { type: String },
     social: SocialSchema,
   },
-  { _id: false, versionKey: false }
+  { _id: false, versionKey: false },
 );
 
 // Define User schema with `password` and required fields
@@ -37,7 +37,7 @@ const UserSchema = new Schema<UserDocument>(
     followersCount: { type: Number, default: 0 }, // New field for followers count
     followingCount: { type: Number, default: 0 }, // New field for following count
   },
-  { timestamps: true, versionKey: false }
+  { timestamps: true, versionKey: false },
 );
 
 // Indexes for fast retrieval
@@ -56,7 +56,7 @@ UserSchema.pre<UserDocument>("save", async function (next) {
 
 // Password validation method
 UserSchema.methods.comparePassword = async function (
-  enteredPassword: string
+  enteredPassword: string,
 ): Promise<boolean> {
   return await bcrypt.compare(enteredPassword, this.password);
 };

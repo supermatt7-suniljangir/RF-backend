@@ -8,7 +8,7 @@ class FollowController {
   static async toggleFollowUser(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const { userId } = req.params;
@@ -27,7 +27,7 @@ class FollowController {
           message: followed
             ? "User followed successfully"
             : "User unfollowed successfully",
-        })
+        }),
       );
     } catch (error: any) {
       logger.error("Error toggling follow:", error);
@@ -39,7 +39,7 @@ class FollowController {
   static async fetchFollowers(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const { userId } = req.params;
@@ -50,7 +50,7 @@ class FollowController {
         success({
           data: followers,
           message: "Followers fetched successfully",
-        })
+        }),
       );
     } catch (error: any) {
       logger.error("Error fetching followers:", error);
@@ -62,7 +62,7 @@ class FollowController {
   static async fetchFollowing(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const { userId } = req.params;
@@ -73,7 +73,7 @@ class FollowController {
         success({
           data: following,
           message: "Following fetched successfully",
-        })
+        }),
       );
     } catch (error: any) {
       logger.error("Error fetching following:", error);
@@ -85,7 +85,7 @@ class FollowController {
   static async isFollowingUser(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const { userId } = req.params;
@@ -97,7 +97,7 @@ class FollowController {
         success({
           data: isFollowing,
           message: isFollowing ? "User is following" : "User is not following",
-        })
+        }),
       );
     } catch (error: any) {
       logger.error("Error checking follow status:", error);

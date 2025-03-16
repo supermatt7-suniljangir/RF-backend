@@ -7,17 +7,14 @@ const s3 = new S3Client({
   region: region,
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-  }
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
 });
 
 const corsConfig = {
   CORSRules: [
     {
-      AllowedOrigins: [
-        "http://localhost:5173", 
-        "http://localhost:5500",
-      ],
+      AllowedOrigins: ["http://localhost:5173", "http://localhost:5500"],
       AllowedMethods: ["GET", "POST", "PUT"],
       AllowedHeaders: ["*"],
       ExposeHeaders: ["ETag"],

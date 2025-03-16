@@ -6,15 +6,35 @@ import { auth, optionalAuth } from "../middlewares/auth";
 const router = Router();
 
 // Follow or unfollow a user
-router.put("/:userId/toggle", limiters.dev, auth, FollowController.toggleFollowUser);
+router.put(
+  "/:userId/toggle",
+  limiters.dev,
+  auth,
+  FollowController.toggleFollowUser,
+);
 
 // Fetch followers of a user
-router.get("/:userId/followers", limiters.dev, optionalAuth, FollowController.fetchFollowers);
+router.get(
+  "/:userId/followers",
+  limiters.dev,
+  optionalAuth,
+  FollowController.fetchFollowers,
+);
 
 // Fetch users followed by a user
-router.get("/:userId/following", limiters.dev, optionalAuth, FollowController.fetchFollowing);
+router.get(
+  "/:userId/following",
+  limiters.dev,
+  optionalAuth,
+  FollowController.fetchFollowing,
+);
 
 // Check if the authenticated user follows a specific user
-router.get("/:userId/check", limiters.dev, auth, FollowController.isFollowingUser);
+router.get(
+  "/:userId/check",
+  limiters.dev,
+  auth,
+  FollowController.isFollowingUser,
+);
 
 export default router;

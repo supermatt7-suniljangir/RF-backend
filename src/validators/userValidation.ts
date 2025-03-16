@@ -46,7 +46,7 @@ const UserSchema = z.object({
 export const validateUser = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<any> => {
   try {
     // If it's an update (PATCH request), make all fields optional

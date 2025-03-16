@@ -11,7 +11,7 @@ const redis = new Redis();
 
 // Handle Redis connection errors
 redis.on("error", (err) => {
-    logger.error(`Redis error: ${err}`);
+  logger.error(`Redis error: ${err}`);
 });
 
 export default redis;

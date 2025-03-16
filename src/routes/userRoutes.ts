@@ -8,14 +8,19 @@ import { validateAuth } from "../validators/authValidation";
 
 const router = Router();
 router.post("/auth", limiters.auth, validateAuth, UserController.authUser);
-router.post("/register", limiters.auth, validateUser, UserController.registerUser);
+router.post(
+  "/register",
+  limiters.auth,
+  validateUser,
+  UserController.registerUser,
+);
 router.get("/profile", limiters.standard, auth, UserController.getUserProfile);
 router.put(
   "/profile",
   limiters.standard,
   auth,
   validateUser,
-  UserController.updateUserProfile
+  UserController.updateUserProfile,
 );
 router.get("/:id", limiters.standard, UserController.getUserById);
 router.post("/logout", limiters.standard, UserController.logoutUser);

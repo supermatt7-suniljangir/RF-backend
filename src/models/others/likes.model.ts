@@ -11,7 +11,7 @@ const LikesSchema = new Schema<ILike>(
     projectId: { type: Schema.Types.ObjectId, ref: "Project", required: true },
     createdAt: { type: Date, default: Date.now },
   },
-  { timestamps: true, versionKey: false }
+  { timestamps: true, versionKey: false },
 );
 
 // Index to efficiently find how many projects a user has liked

@@ -8,7 +8,7 @@ class CommentController {
   static async addProjectComment(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const { projectId } = req.params;
@@ -24,14 +24,14 @@ class CommentController {
       const comment = await CommentService.addComment(
         projectId,
         userId,
-        content
+        content,
       );
 
       res.status(201).json(
         success({
           data: comment,
           message: "Comment added successfully",
-        })
+        }),
       );
     } catch (error: any) {
       logger.error("Error adding comment:", error);
@@ -43,7 +43,7 @@ class CommentController {
   static async getAllComments(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const { projectId } = req.params;
@@ -54,7 +54,7 @@ class CommentController {
         success({
           data: comments,
           message: "Comments fetched successfully",
-        })
+        }),
       );
     } catch (error: any) {
       logger.error("Error fetching comments:", error);
@@ -66,7 +66,7 @@ class CommentController {
   static async deleteComment(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const { projectId, commentId } = req.params;
@@ -84,7 +84,7 @@ class CommentController {
         success({
           data: true,
           message: "Comment deleted successfully",
-        })
+        }),
       );
     } catch (error: any) {
       logger.error("Error deleting comment:", error);

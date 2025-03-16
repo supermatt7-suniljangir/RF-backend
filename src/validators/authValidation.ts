@@ -21,7 +21,7 @@ const LoginSchema = z
 export const validateAuth = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<any> => {
   try {
     await LoginSchema.parseAsync(req.body);

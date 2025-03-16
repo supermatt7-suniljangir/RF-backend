@@ -1,10 +1,10 @@
-import {Types} from "mongoose";
+import { Types } from "mongoose";
 import DbService from ".";
 import Like from "../models/others/likes.model";
 import Project from "../models/project/project.model";
 import User from "../models/user/user.model";
-import {ILike} from "../types/others";
-import {redisClient, invalidateCache} from "../redis/redisClient";
+import { ILike } from "../types/others";
+import { redisClient, invalidateCache } from "../redis/redisClient";
 import logger from "../config/logger";
 
 class LikesService {
@@ -45,7 +45,7 @@ class LikesService {
       // Invalidate cache since data has changed
       await this.invalidateLikeCache(projectId, userId);
 
-      return {liked: false};
+      return { liked: false };
     }
 
     await this.dbService.create({
@@ -63,7 +63,7 @@ class LikesService {
     // Invalidate cache since data has changed
     await this.invalidateLikeCache(projectId, userId);
 
-    return {liked: true};
+    return { liked: true };
   }
 
   // Fetch likes for a project
@@ -75,9 +75,11 @@ class LikesService {
       return JSON.parse(cachedData);
     }
 
-    const likes = await this.dbService.findAll({projectId});
+    const likes = await this.dbService.findAll({ projectId });
 
-    await redisClient.set(cacheKey, JSON.stringify(likes), {EX: this.CACHE_EXPIRATION});
+    await redisClient.set(cacheKey, JSON.stringify(likes), {
+      EX: this.CACHE_EXPIRATION,
+    });
 
     return likes;
   }
@@ -88,7 +90,7 @@ class LikesService {
 
     const cachedValue = await redisClient.get(cacheKey);
     if (cachedValue !== null) {
-      return cachedValue === 'true';
+      return cachedValue === "true";
     }
 
     const like = await this.dbService.findOne({
@@ -97,7 +99,9 @@ class LikesService {
     });
 
     const isLiked = !!like;
-    await redisClient.set(cacheKey, isLiked ? 'true' : 'false', {EX: this.CACHE_EXPIRATION});
+    await redisClient.set(cacheKey, isLiked ? "true" : "false", {
+      EX: this.CACHE_EXPIRATION,
+    });
 
     return isLiked;
   }
@@ -112,27 +116,29 @@ class LikesService {
     }
 
     const likedProjects = await this.dbService.findAll(
-        {"likedBy.userId": userId},
-        "projectId"
+      { "likedBy.userId": userId },
+      "projectId",
     );
 
     const projectIds = likedProjects.map((like) => like.projectId);
 
-    const projects = await Project.find({_id: {$in: projectIds}})
-        .select(
-            "title thumbnail stats creator collaborators featured publishedAt status"
-        )
-        .populate({
-          path: "creator",
-          select: "fullName email profile.avatar",
-        })
-        .populate({
-          path: "collaborators",
-          select: "fullName email profile.avatar",
-        })
-        .lean();
+    const projects = await Project.find({ _id: { $in: projectIds } })
+      .select(
+        "title thumbnail stats creator collaborators featured publishedAt status",
+      )
+      .populate({
+        path: "creator",
+        select: "fullName email profile.avatar",
+      })
+      .populate({
+        path: "collaborators",
+        select: "fullName email profile.avatar",
+      })
+      .lean();
 
-    await redisClient.set(cacheKey, JSON.stringify(projects), {EX: this.CACHE_EXPIRATION});
+    await redisClient.set(cacheKey, JSON.stringify(projects), {
+      EX: this.CACHE_EXPIRATION,
+    });
 
     return projects;
   }

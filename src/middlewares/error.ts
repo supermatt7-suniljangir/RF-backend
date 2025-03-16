@@ -12,7 +12,7 @@ export const globalErrorHandler: ErrorRequestHandler = (
   err: AppError,
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): void => {
   err.statusCode = err.statusCode || 500;
 

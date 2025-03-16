@@ -16,12 +16,13 @@ const logFormat = winston.format.combine(
   winston.format.splat(),
   winston.format.printf(({ timestamp, level, message, ...rest }) => {
     // Handle the second argument if present
-    const splat = rest[Symbol.for('splat')];
-    const secondArg = Array.isArray(splat) ? 
-      JSON.stringify(splat[0], null, 2) : '';
-    
-    return `${timestamp} ${level}: ${message}${secondArg ? ' ' + secondArg : ''}`;
-  })
+    const splat = rest[Symbol.for("splat")];
+    const secondArg = Array.isArray(splat)
+      ? JSON.stringify(splat[0], null, 2)
+      : "";
+
+    return `${timestamp} ${level}: ${message}${secondArg ? " " + secondArg : ""}`;
+  }),
 );
 
 // Create logger
@@ -36,15 +37,16 @@ const logger = winston.createLogger({
         winston.format.splat(),
         // First generate the log string
         winston.format.printf(({ timestamp, level, message, ...rest }) => {
-          const splat = rest[Symbol.for('splat')];
-          const secondArg = Array.isArray(splat) ? 
-            JSON.stringify(splat[0], null, 2) : '';
-          
-          return `${timestamp} ${level}: ${message}${secondArg ? ' ' + secondArg : ''}`;
+          const splat = rest[Symbol.for("splat")];
+          const secondArg = Array.isArray(splat)
+            ? JSON.stringify(splat[0], null, 2)
+            : "";
+
+          return `${timestamp} ${level}: ${message}${secondArg ? " " + secondArg : ""}`;
         }),
         // Then colorize the entire string
-        winston.format.colorize({ all: true })
-      )
+        winston.format.colorize({ all: true }),
+      ),
     }),
 
     // File transports (use the standard logFormat)
@@ -53,13 +55,13 @@ const logger = winston.createLogger({
       level: "error",
       maxsize: 5242880, // 5MB
       maxFiles: 5,
-      format: logFormat
+      format: logFormat,
     }),
     new winston.transports.File({
       filename: "logs/combined.log",
       maxsize: 5242880, // 5MB
       maxFiles: 5,
-      format: logFormat
+      format: logFormat,
     }),
   ],
 });

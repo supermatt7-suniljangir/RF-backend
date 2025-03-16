@@ -9,7 +9,7 @@ router.get("/", auth, BookmarkController.getUserBookmarks);
 router.get(
   "/:projectId/check",
   optionalAuth,
-  BookmarkController.hasUserBookmarkedProject
+  BookmarkController.hasUserBookmarkedProject,
 );
 
 export default router;

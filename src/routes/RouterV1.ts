@@ -1,4 +1,4 @@
-import {Router} from "express";
+import { Router } from "express";
 import userRoutes from "./userRoutes";
 import uploadRoutes from "./uploaderRoutes";
 import searchRoutes from "./serachRoutes";

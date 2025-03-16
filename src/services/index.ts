@@ -22,7 +22,7 @@ export default class DbService<T extends Document> {
   // Find one document by a filter
   findOne = async (
     filter: FilterQuery<T>,
-    select?: string
+    select?: string,
   ): Promise<T | null> => {
     return this.model
       .findOne(filter)
@@ -39,7 +39,7 @@ export default class DbService<T extends Document> {
   update = async (
     id: string,
     data: UpdateQuery<T>,
-    options = { new: true }
+    options = { new: true },
   ): Promise<T | null> => {
     if (!Types.ObjectId.isValid(id)) throw new Error("Invalid ID");
     return this.model.findByIdAndUpdate(id, data, options).exec();
@@ -63,7 +63,7 @@ export default class DbService<T extends Document> {
     select = "",
     limit = 10,
     skip = 0,
-    sort = "createdAt"
+    sort = "createdAt",
   ): Promise<T[]> => {
     return this.model
       .find(filter)
@@ -77,7 +77,7 @@ export default class DbService<T extends Document> {
   // Bulk update documents
   updateMany = async (
     filter: FilterQuery<T>,
-    data: UpdateQuery<T>
+    data: UpdateQuery<T>,
   ): Promise<number> => {
     const result = await this.model.updateMany(filter, data).exec();
     return result.modifiedCount;
