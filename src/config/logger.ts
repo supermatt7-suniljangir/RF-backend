@@ -17,7 +17,6 @@ const logFormat = winston.format.combine(
 );
 
 const logger = winston.createLogger({
-    level: "error", // Only log errors
     transports: [
         new winston.transports.Console({
             format: winston.format.combine(

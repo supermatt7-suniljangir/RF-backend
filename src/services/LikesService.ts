@@ -1,28 +1,19 @@
-import { Types } from "mongoose";
 import DbService from ".";
 import Like from "../models/others/likes.model";
 import Project from "../models/project/project.model";
 import User from "../models/user/user.model";
 import { ILike } from "../types/others";
-import { redisClient, invalidateCache } from "../redis/redisClient";
-import logger from "../config/logger";
+import { redisClient } from "../redis/redisClient";
+import {
+  getLikesKey,
+  getUserLikeStatusKey,
+  getLikedProjectsKey,
+  invalidateLikeCache,
+} from "../redis/cacheUtils"; // Import from the new utility
 
 class LikesService {
   private dbService = new DbService<ILike>(Like);
   private CACHE_EXPIRATION = 3600; // 1 hour
-
-  // Cache key generation methods
-  private getLikesKey(projectId: string): string {
-    return `likes:${projectId}`;
-  }
-
-  private getUserLikeStatusKey(userId: string, projectId: string): string {
-    return `like:${userId}:${projectId}`;
-  }
-
-  private getLikedProjectsKey(userId: string): string {
-    return `likedProjects:${userId}`;
-  }
 
   // Toggle like/unlike a project
   async toggleLike(projectId: string, userId: string) {
@@ -42,8 +33,8 @@ class LikesService {
       project.stats.likes = Math.max(0, project.stats.likes - 1);
       await project.save();
 
-      // Invalidate cache since data has changed
-      await this.invalidateLikeCache(projectId, userId);
+      // Invalidate cache using the shared utility
+      await invalidateLikeCache(projectId, userId);
 
       return { liked: false };
     }
@@ -60,15 +51,15 @@ class LikesService {
     project.stats.likes += 1;
     await project.save();
 
-    // Invalidate cache since data has changed
-    await this.invalidateLikeCache(projectId, userId);
+    // Invalidate cache using the shared utility
+    await invalidateLikeCache(projectId, userId);
 
     return { liked: true };
   }
 
   // Fetch likes for a project
   async getLikes(projectId: string) {
-    const cacheKey = this.getLikesKey(projectId);
+    const cacheKey = getLikesKey(projectId);
 
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
@@ -86,7 +77,7 @@ class LikesService {
 
   // Check if a user has liked a project
   async hasUserLiked(projectId: string, userId: string) {
-    const cacheKey = this.getUserLikeStatusKey(userId, projectId);
+    const cacheKey = getUserLikeStatusKey(userId, projectId);
 
     const cachedValue = await redisClient.get(cacheKey);
     if (cachedValue !== null) {
@@ -108,7 +99,7 @@ class LikesService {
 
   // Fetch projects liked by a user
   async getProjectsLikedByUser(userId: string) {
-    const cacheKey = this.getLikedProjectsKey(userId);
+    const cacheKey = getLikedProjectsKey(userId);
 
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
@@ -141,13 +132,6 @@ class LikesService {
     });
 
     return projects;
-  }
-
-  // Invalidate all relevant caches when like data changes
-  private async invalidateLikeCache(projectId: string, userId: string) {
-    await invalidateCache(this.getLikesKey(projectId));
-    await invalidateCache(this.getUserLikeStatusKey(userId, projectId));
-    await invalidateCache(this.getLikedProjectsKey(userId));
   }
 }
 

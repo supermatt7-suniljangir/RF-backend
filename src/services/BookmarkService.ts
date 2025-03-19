@@ -2,40 +2,36 @@ import DbService from "./";
 import Bookmark from "../models/others/bookmark.model";
 import { IBookmark } from "../types/others";
 import Project from "../models/project/project.model";
-import { redisClient, invalidateCache } from "../redis/redisClient";
+import { redisClient } from "../redis/redisClient";
+import {
+  getUserBookmarksKey,
+  getBookmarkStatusKey,
+  invalidateBookmarkCache,
+} from "../redis/cacheUtils";
 
 class BookmarkService {
   private dbService = new DbService<IBookmark>(Bookmark);
   private CACHE_EXPIRATION = 3600; // 1 hour
 
-  // Generic cache key methods
-  private getUserBookmarksKey(userId: string): string {
-    return `bookmarks:${userId}`;
-  }
-
-  private getBookmarkStatusKey(userId: string, projectId: string): string {
-    return `bookmark:${userId}:${projectId}`;
-  }
-
   // Toggle bookmark
   async toggleBookmark(userId: string, projectId: string) {
     const bookmarkExists = await this.dbService.findOne({ userId, projectId });
-    // Invalidate caches since data has changed
-    await invalidateCache(this.getUserBookmarksKey(userId));
-    await invalidateCache(this.getBookmarkStatusKey(userId, projectId));
+
+    // Invalidate caches using the utility function
+    await invalidateBookmarkCache(projectId, userId);
+
     if (bookmarkExists) {
       await this.dbService.delete(bookmarkExists._id);
       return { bookmarked: false };
     } else {
       const newBookmark = await this.dbService.create({ userId, projectId });
-
       return { bookmarked: true, bookmark: newBookmark };
     }
   }
 
   // Get user bookmarks
   async getUserBookmarks(userId: string) {
-    const cacheKey = this.getUserBookmarksKey(userId);
+    const cacheKey = getUserBookmarksKey(userId);
 
     // Try fetching from cache
     const cachedData = await redisClient.get(cacheKey);
@@ -73,7 +69,7 @@ class BookmarkService {
 
   // Check if user has bookmarked a project
   async hasUserBookmarkedProject(userId: string, projectId: string) {
-    const cacheKey = this.getBookmarkStatusKey(userId, projectId);
+    const cacheKey = getBookmarkStatusKey(userId, projectId);
 
     // Try fetching from cache
     const cachedValue = await redisClient.get(cacheKey);
