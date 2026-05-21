@@ -22,6 +22,7 @@ class UserController {
 
     try {
       const user = await UserService.getUserById(req.user._id);
+
       if (!user) {
         next(new AppError("User not found", 404));
         return;
@@ -44,7 +45,6 @@ class UserController {
     next: NextFunction,
   ): Promise<void> {
     const { email, password, googleToken } = req.body;
-
     try {
       // Google Authentication Flow
       if (googleToken) {

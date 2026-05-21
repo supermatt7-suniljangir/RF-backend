@@ -14,16 +14,13 @@ export const initializeSocket = (io: Server) => {
 
     // Register user on connection
     socket.on("register", async (userId) => {
-      logger.info("the user id whileboroe registering is", userId);
       try {
-        
         socket.data.ready = false;
         await redis.sadd(`userSockets:${userId}`, socket.id);
         await redis.set(`socket:${socket.id}`, userId, "EX", 86400);
         socket.data.ready = true;
         registerConversationEvents(socket, io);
         socket.emit("ready");
-        logger.info(`User ${userId} registered with socket ${socket.id}`);
       } catch (error) {
         logger.error(`Error registering user ${userId}: ${error}`);
         socket.emit("error", { message: "Failed to register with server" });
@@ -36,7 +33,6 @@ export const initializeSocket = (io: Server) => {
         socket.emit("error", { message: "Socket not ready" });
         return;
       }
-      logger.debug(`recipentId: ${to}, text: ${text}`);
       handleSendMessage(socket, io, to, text);
     });
 
@@ -53,9 +49,7 @@ export const initializeSocket = (io: Server) => {
           const remainingSockets = await redis.scard(`userSockets:${userId}`);
           if (remainingSockets === 0) {
             await redis.del(`userSockets:${userId}`);
-            logger.info(`User ${userId} is fully disconnected.`);
           }
-          logger.info(`Socket ${socket.id} removed for user ${userId}`);
         }
       } catch (error) {
         logger.error(`Error handling disconnect: ${error}`);
