@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { AppError, success } from "../utils/responseTypes";
 import logger from "../config/logger";
 import ToolService from "../services/ToolsService"; // Adjust the import path as needed
+import { TransitionStorageClass } from "@aws-sdk/client-s3";
 
 class ToolController {
   static async createTool(
@@ -19,7 +20,6 @@ class ToolController {
 
     try {
       const tool = await ToolService.createTool(name, icon);
-
       res.status(201).json(
         success({
           data: tool,
@@ -39,6 +39,7 @@ class ToolController {
   ): Promise<void> {
     try {
       const tools = await ToolService.getAllTools();
+      logger.info("tools are: ", tools);
 
       res.status(200).json(
         success({

@@ -5,6 +5,7 @@
  */
 
 import { STAGES } from "../utils/stages";
+import { DEV_ORIGINS, PROD_ORIGINS } from "./configURLs";
 
 /**
  * getCorsConfig Function
@@ -17,11 +18,8 @@ export const getCorsConfig = (): object => {
   const isProduction = process.env.NODE_ENV === STAGES.PROD;
   return {
     origin: isProduction
-      ? [
-          "https://www.radiatorforge.suniljangir.site",
-          "https://radiatorforge.suniljangir.site",
-        ]
-      : ["http://localhost:5173"],
+      ? PROD_ORIGINS
+      : DEV_ORIGINS,
     credentials: true, // Allow credentials (e.g., cookies)
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"], // Allowed HTTP methods
     allowedHeaders: [

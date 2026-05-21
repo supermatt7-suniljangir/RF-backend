@@ -66,7 +66,6 @@ app.use(express.urlencoded({ extended: true, limit: "10kb" }));
  * - Warn (400-499): Client errors
  * - Info (200-399): Successful responses
  */
-
 app.use((req, res, next) => {
   const originalUrl = req.originalUrl || req.url; // Capture the request URL
   const start = Date.now(); // Start timing the request
@@ -75,12 +74,13 @@ app.use((req, res, next) => {
     const duration = Date.now() - start; // Calculate response duration
     const statusCode = res.statusCode; // Capture the status code
     const logMessage = `${req.method}  ${originalUrl} → ${statusCode} (${duration}ms)`; // Create log message
-    // const logData = {
-    //     method: req.method,
-    //     url: originalUrl,
-    //     statusCode: statusCode,
-    //     duration,
-    // };
+    const logData = {
+      method: req.method,
+      url: originalUrl,
+      statusCode: statusCode,
+      duration,
+      ...req.body,
+    };
 
     // Log based on status code severity
     if (statusCode >= 500) {

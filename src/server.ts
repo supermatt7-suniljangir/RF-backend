@@ -1,4 +1,6 @@
-import {PORT} from "./config/configURLs"; // Configuration for server port
+import { setServers } from "dns/promises";
+setServers(["1.1.1.1", "1.0.0.1"]); //temporary fix for bad dns envrionment
+import {PORT, NODE_ENV} from "./config/configURLs"; // Configuration for server port
 import {connectDB, disconnectDB} from "./config/db"; // Database connection utilities
 import app from "./app"; // Express application
 import logger from "./config/logger"; // Custom logger for logging server events
@@ -16,7 +18,7 @@ const initializeServer = async () => {
     try {
         // Step 1: Connect to the database
         await connectDB();
-
+ 
         // Step 2: Create an HTTP server and attach the Express app
         const server = http.createServer(app);
 
@@ -27,6 +29,7 @@ const initializeServer = async () => {
         // Step 4: Initialize WebSocket logic and get the cleanup function
         const socketManager: { cleanup: () => void } = initializeSocket(io);
 
+        
         // Step 5: Start the server and listen on the specified port
         server.listen(PORT, () => {
             logger.info(

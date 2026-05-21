@@ -29,7 +29,6 @@ class UserService {
     // Try fetching from cache
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
-      logger.debug(`Cache hit for user data`);
       return JSON.parse(cachedData);
     }
 

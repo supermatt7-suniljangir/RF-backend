@@ -10,6 +10,7 @@ const connectDB = async () => {
     }
     const conn = await mongoose.connect(MONGO_URI);
     logger.info(`MongoDB Connected: ${conn.connection.host}`);
+    logger.info(`DB name is ${mongoose.connection.name}` )
   } catch (err) {
     logger.error(`Error: ${err as Error}`);
     process.exit(1);
@@ -22,7 +23,7 @@ const disconnectDB = async () => {
     logger.info("MongoDB Disconnected");
   } catch (err) {
     logger.error(`Error: ${err as Error}`);
-    process.exit(1);
+    throw new AppError("Error disconnecting from database", 500);
   }
 };
 

@@ -6,7 +6,7 @@ import logger from "../config/logger";
 interface RateLimitOptions {
   windowMs?: number;
   max?: number;
-  message?: string;
+  message?:  string | Record<string, any>;
 }
 
 // Generalized rate limiter factory

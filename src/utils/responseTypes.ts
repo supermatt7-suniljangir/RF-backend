@@ -1,12 +1,10 @@
 // utils/appError.ts
 export class AppError extends Error {
   statusCode: number;
-  isOperational: boolean;
 
   constructor(message: string, statusCode: number) {
     super(message);
     this.statusCode = statusCode;
-    this.isOperational = true; // Set to true to differentiate between operational and programming errors
   }
 }
 
@@ -24,11 +22,12 @@ export function success<T>({
   };
 }
 
-export function formValidationError(errors: ValidationError[]): ApiResponse {
+export function formValidationError(errors: ValidationError[]): ApiResponse<null> {
   return {
     success: false,
     message: "Validation error",
     errors,
+    data: null,
   };
 }
 

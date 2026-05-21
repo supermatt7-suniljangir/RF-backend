@@ -2,23 +2,46 @@ import { Schema, model, Document, Types } from "mongoose";
 import { ITools, ProjectDocument } from "../../types/project";
 import { title } from "process";
 
+const ThumbnailSchema = new Schema(
+  {
+    key: {
+      type: String,
+    },
+
+    type: {
+      type: String,
+      required: true,
+    },
+
+    url: {
+      type: String,
+      required: true,
+    },
+  },
+  { _id: false },
+);
+
 const ProjectSchema = new Schema<ProjectDocument>(
   {
     title: { type: String, required: true },
     description: { type: String, required: true },
     shortDescription: { type: String, required: true, maxlength: 160 },
-    thumbnail: {
-      type: String,
-      required: true,
-    },
+    thumbnail: ThumbnailSchema,
     media: [
       {
         _id: false,
+
+        key: {
+          type: String,
+          required: true,
+        },
+
         type: {
           type: String,
           enum: ["image", "video"],
           required: true,
         },
+
         url: {
           type: String,
           required: true,

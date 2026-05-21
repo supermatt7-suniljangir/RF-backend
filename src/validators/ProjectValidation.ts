@@ -16,7 +16,13 @@ const MediaSchema = z.object({
   url: z.string().url("Invalid media URL"),
   order: z.number().int().min(0).optional(),
 });
+const ThumbnailSchema = z.object({
+  key: z.string().optional(),
 
+  type: z.string().min(1, "Thumbnail type is required"),
+
+  url: z.string().url("Invalid thumbnail URL"),
+});
 // Copyright Schema
 const CopyrightSchema = z.object({
   license: z.string().min(1, "License is required"),
@@ -29,7 +35,7 @@ const ProjectSchema = z.object({
   title: z.string().min(3).max(100),
   description: z.string().min(10),
   shortDescription: z.string().max(160),
-  thumbnail: z.string().url("Invalid thumbnail URL"),
+  thumbnail: ThumbnailSchema,
   media: z.array(MediaSchema).max(10),
   creator: z.string().refine(isValidMongoId, "Invalid creator ID"),
   collaborators: z
@@ -64,7 +70,7 @@ export const validateProject = async (
     await ProjectSchema.parseAsync(req.body);
     next();
   } catch (error) {
-    logger.error(error);
+    logger.error("Validation failed", error);
     if (error instanceof z.ZodError) {
       const validationErrors = error.errors.map((e) => ({
         field: e.path.join("."),

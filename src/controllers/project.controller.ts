@@ -23,8 +23,7 @@ class ProjectController {
         .status(201)
         .json(success({ data: project, message: "Project created" }));
     } catch (error: any) {
-      logger.error(`Error creating project: ${error.message}`);
-
+      logger.error("Error creating project", error);
       if (error.code === 11000) {
         next(new AppError("A project with this slug already exists", 400));
         return;
@@ -97,9 +96,12 @@ class ProjectController {
     try {
       const projects = await ProjectService.getPublishedProjects();
 
-      res
-        .status(200)
-        .json(success({ data: projects, message: "Projects fetched" }));
+      res.status(200).json(
+        success({
+          data: projects,
+          message: `${projects.length} projects fetched`,
+        }),
+      );
     } catch (error: any) {
       logger.error(`Error fetching projects: ${error.message}`);
       next(new AppError("Failed to fetch projects", 500));

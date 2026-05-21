@@ -11,6 +11,13 @@ export interface Imedia {
   _id?: Types.ObjectId;
   type: "image" | "video";
   url: string;
+  key: string;
+}
+export interface IThumbnail {
+  _id?: Types.ObjectId;
+  type: string | "image/thumbnail";
+  url: string;
+  key: string;
 }
 
 export interface IStats {
@@ -43,7 +50,7 @@ export interface ProjectType {
   title: string;
   description: string;
   shortDescription: string;
-  thumbnail: string;
+  thumbnail: IThumbnail;
   media: Imedia[];
   creator: Types.ObjectId | string; // User ID
   collaborators?: (Types.ObjectId | string)[]; // Array of user IDs
@@ -64,7 +71,7 @@ export interface ProjectDocument extends Document {
   title: string;
   description: string;
   shortDescription: string;
-  thumbnail: string;
+  thumbnail: IThumbnail;
   media: Imedia[];
   creator: Types.ObjectId | string;
   collaborators?: (Types.ObjectId | string)[];

@@ -3,8 +3,9 @@ import { OAuth2Client } from "google-auth-library";
 import { UserDocument } from "../types/user";
 import { AppError } from "../utils/responseTypes";
 import UserService from "../services/UserService";
+import { GOOGLE_CLIENT_ID } from "../config/configURLs";
 
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID); // Your Google OAuth Client ID
+const client = new OAuth2Client(GOOGLE_CLIENT_ID); // Your Google OAuth Client ID
 
 // Google login or register function
 const googleAuth = async (googleToken: string): Promise<UserDocument> => {
@@ -12,7 +13,7 @@ const googleAuth = async (googleToken: string): Promise<UserDocument> => {
     // Verify the Google ID token
     const ticket = await client.verifyIdToken({
       idToken: googleToken,
-      audience: process.env.GOOGLE_CLIENT_ID, // Your Google OAuth Client ID
+      audience: GOOGLE_CLIENT_ID, // Your Google OAuth Client ID
     });
 
     const payload = ticket.getPayload();
