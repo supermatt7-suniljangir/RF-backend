@@ -28,7 +28,6 @@
     "zod": "^3.23.8"
   },
   "scripts": {
-    "kport": "kport.bat",
     "start": "node ./dist/server.js",
     "dev": "kill-port 5500 && nodemon --watch . --ext ts --exec tsx src/server.ts",
     "import": "nodemon ./src/seed.ts",
