@@ -16,6 +16,7 @@ const generateToken = (res: Response, _id: any): string => {
       secure: true, // Consistent with clearCookie
       maxAge: 30 * 24 * 60 * 60 * 1000,
       path: "/",
+      domain: ".rf.suniljangir.in",
     });
 
     return token;
