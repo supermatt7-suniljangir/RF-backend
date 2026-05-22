@@ -4,6 +4,7 @@
  * This module provides a reusable CORS configuration object for both Express and Socket.IO.
  */
 
+import { CorsOptions } from "cors";
 import { STAGES } from "../utils/stages";
 import { DEV_ORIGINS, PROD_ORIGINS } from "./configURLs";
 
@@ -14,7 +15,7 @@ import { DEV_ORIGINS, PROD_ORIGINS } from "./configURLs";
  *
  * @returns {Object} - CORS configuration object.
  */
-export const getCorsConfig = (): object => {
+export const getCorsConfig = (): CorsOptions => {
   const isProduction = process.env.NODE_ENV === STAGES.PROD;
   return {
     origin: isProduction

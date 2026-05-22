@@ -16,10 +16,6 @@ const generateToken = (res: Response, _id: any): string => {
       secure: true, // Consistent with clearCookie
       maxAge: 30 * 24 * 60 * 60 * 1000,
       path: "/",
-      domain:
-        process.env.NODE_ENV === STAGES.PROD
-          ? ".radiatorforge.suniljangir.site"
-          : undefined,
     });
 
     return token;
