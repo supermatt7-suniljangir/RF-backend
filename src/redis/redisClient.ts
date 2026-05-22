@@ -4,9 +4,11 @@ import logger from "../config/logger";
 const redisClient = createClient({
   url: process.env.REDIS_URL,
   socket: {
-    reconnectStrategy(retries) {
+    reconnectStrategy: (retries) => {
+      console.log("Redis retries:", retries);
+
       if (retries > 3) {
-        logger.error("Redis reconnect attempts exhausted");
+        console.log("Stopping Redis reconnect attempts");
         return false;
       }
 

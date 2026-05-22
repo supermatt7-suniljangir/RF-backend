@@ -6,13 +6,14 @@
 import Redis from "ioredis";
 import logger from "../config/logger";
 
-// Initialize Redis client with basic error handling
 const redis = new Redis(process.env.REDIS_URL!, {
   maxRetriesPerRequest: 3,
+  retryStrategy: (times) => {
+    if (times > 3) {
+      logger.error("Redis: max reconnection attempts reached, giving up");
+      return null; // null = stop retrying
+    }
+    return Math.min(times * 500, 2000);
+  },
 });
-// Handle Redis connection errors
-redis.on("error", (err) => {
-  logger.error(`Redis error: ${err}`);
-});
-
 export default redis;
