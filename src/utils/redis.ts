@@ -7,8 +7,9 @@ import Redis from "ioredis";
 import logger from "../config/logger";
 
 // Initialize Redis client with basic error handling
-const redis = new Redis(process.env.REDIS_URL!);
-
+const redis = new Redis(process.env.REDIS_URL!, {
+  maxRetriesPerRequest: 3,
+});
 // Handle Redis connection errors
 redis.on("error", (err) => {
   logger.error(`Redis error: ${err}`);

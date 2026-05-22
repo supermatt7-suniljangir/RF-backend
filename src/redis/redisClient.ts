@@ -2,7 +2,17 @@ import { createClient } from "redis";
 import logger from "../config/logger";
 
 const redisClient = createClient({
-  url: process.env.REDIS_SERVER_URL, // Replace with your Redis server URL
+  url: process.env.REDIS_URL,
+  socket: {
+    reconnectStrategy(retries) {
+      if (retries > 3) {
+        logger.error("Redis reconnect attempts exhausted");
+        return false;
+      }
+
+      return 1000;
+    },
+  },
 });
 
 redisClient.on("error", (err) => {
