@@ -8,6 +8,24 @@ import UserService from "../services/UserService";
 import { STAGES } from "../utils/stages";
 import User from "../models/user/user.model";
 
+const PROFILE_SCALAR_FIELDS = [
+  "bio",
+  "avatar",
+  "cover",
+  "website",
+  "profession",
+  "availableForHire",
+  "location",
+] as const satisfies ReadonlyArray<keyof Omit<Profile, "social">>;
+
+const SOCIAL_FIELDS = [
+  "facebook",
+  "twitter",
+  "instagram",
+  "linkedin",
+  "github",
+] as const satisfies ReadonlyArray<keyof Social>;
+
 class UserController {
   static async getUserProfile(
     req: Request,
@@ -127,24 +145,24 @@ class UserController {
 
       // Handle profile updates with deep merging
       if (req.body.profile) {
-        // Handle regular profile fields
-        Object.keys(req.body.profile).forEach((field) => {
-          if (field !== "social") {
-            (user!.profile as Profile)[field as keyof Omit<Profile, "social">] =
-              req.body.profile[field];
-          }
-        });
+        const profileUpdate = req.body.profile;
 
-        // Handle social media updates separately
-        if (req.body.profile.social) {
+        for (const field of PROFILE_SCALAR_FIELDS) {
+          if (profileUpdate[field] !== undefined) {
+            user.profile![field] = profileUpdate[field];
+          }
+        }
+
+        if (profileUpdate.social) {
           if (!user.profile.social) {
             user.profile.social = {} as Social;
           }
 
-          Object.keys(req.body.profile.social).forEach((field) => {
-            (user!.profile!.social as Social)[field as keyof Social] =
-              req.body.profile.social[field];
-          });
+          for (const field of SOCIAL_FIELDS) {
+            if (profileUpdate.social[field] !== undefined) {
+              user.profile.social[field] = profileUpdate.social[field];
+            }
+          }
         }
       }
 
