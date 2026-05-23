@@ -21,6 +21,7 @@ export interface Profile {
   profession?: string;
   availableForHire?: boolean;
   social?: Social;
+  location: string;
 }
 
 // User interface

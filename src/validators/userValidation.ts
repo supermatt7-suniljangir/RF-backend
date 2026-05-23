@@ -18,6 +18,7 @@ const ProfileSchema = z.object({
   following: z.array(z.string()).optional(), // Array of user IDs
   website: z.string().url("Invalid website URL").optional(),
   profession: z.string().optional(),
+  location: z.string().optional(),
   availableForHire: z.boolean().optional(),
   social: SocialSchema.optional(),
 });

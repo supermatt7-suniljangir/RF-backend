@@ -24,8 +24,8 @@ const ThumbnailSchema = new Schema(
 const ProjectSchema = new Schema<ProjectDocument>(
   {
     title: { type: String, required: true },
-    description: { type: String, required: true },
-    shortDescription: { type: String, required: true, maxlength: 160 },
+    description: { type: String },
+    shortDescription: { type: String, maxlength: 160 },
     thumbnail: ThumbnailSchema,
     media: [
       {

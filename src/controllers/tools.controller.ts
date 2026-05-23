@@ -39,7 +39,6 @@ class ToolController {
   ): Promise<void> {
     try {
       const tools = await ToolService.getAllTools();
-      logger.info("tools are: ", tools);
 
       res.status(200).json(
         success({

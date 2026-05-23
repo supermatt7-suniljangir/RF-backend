@@ -23,6 +23,7 @@ const ProfileSchema = new Schema<Profile>(
     website: { type: String },
     profession: { type: String },
     social: SocialSchema,
+    location: { type: String },
   },
   { _id: false, versionKey: false },
 );
