@@ -35,7 +35,7 @@ class UserController {
       );
     } catch (error: any) {
       logger.error("Error fetching user profile:", error);
-      next(new AppError(error.message, 500));
+      next(new AppError(error.message, error.status || 500));
     }
   }
 
@@ -44,26 +44,8 @@ class UserController {
     res: Response,
     next: NextFunction,
   ): Promise<void> {
-    const { email, password, googleToken } = req.body;
+    const { email, password } = req.body;
     try {
-      // Google Authentication Flow
-      if (googleToken) {
-        const googleUserData = await googleAuth(googleToken);
-        const user = await UserService.getUserByEmail(googleUserData.email);
-        if (!user) {
-          next(new AppError("User not found", 404));
-          return;
-        }
-        generateToken(res, user._id);
-        res.status(200).json(
-          success({
-            data: true,
-            message: "User authenticated successfully",
-          }),
-        );
-        return;
-      }
-
       // Email/Password Authentication Flow
       const user = await UserService.getUserByEmail(email, true);
 
@@ -96,26 +78,7 @@ class UserController {
     res: Response,
     next: NextFunction,
   ): Promise<void> {
-    const { email, password, fullName, googleToken } = req.body;
-
-    if (googleToken) {
-      try {
-        const googleUserData = await googleAuth(googleToken);
-        generateToken(res, googleUserData._id);
-        res.status(201).json(
-          success({
-            message: "User created successfully",
-            data: true,
-          }),
-        );
-      } catch (error: any) {
-        next(
-          new AppError("Google authentication failed: " + error.message, 401),
-        );
-      }
-      return;
-    }
-
+    const { email, password, fullName } = req.body;
     try {
       const userExists = await UserService.checkUserExists(email);
       if (userExists) {

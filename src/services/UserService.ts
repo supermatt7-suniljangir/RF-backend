@@ -33,16 +33,47 @@ class UserService {
     }
 
     const user = await this.dbService.findById(id);
+
     if (!user) return null;
 
-    // Cache user data
-    await redisClient.set(cacheKey, JSON.stringify(user), {
+    await redisClient.set(cacheKey, JSON.stringify(user.toJSON()), {
       EX: this.CACHE_EXPIRATION,
     });
 
     return user;
   }
 
+  async findOrCreateGoogleUser(googleData: {
+    email: string;
+    fullName?: string;
+    avatar?: string;
+  }) {
+    const user = await User.findOneAndUpdate(
+      {
+        email: googleData.email,
+      },
+      {
+        $setOnInsert: {
+          email: googleData.email,
+          fullName: googleData.fullName,
+          followingCount: 0,
+          followersCount: 0,
+          profile: {
+            avatar: googleData.avatar,
+          },
+        },
+      },
+      {
+        new: true,
+        upsert: true,
+      },
+    );
+
+    // invalidate caches AFTER operation
+    await invalidateCache(this.getUserByEmailKey(googleData.email));
+
+    return user;
+  }
   // Get user by email
   async getUserByEmail(email: string, includePassword = false) {
     // Don't cache if we're including the password for security reasons
@@ -73,21 +104,7 @@ class UserService {
 
   // Check if a user exists by email
   async checkUserExists(email: string) {
-    const cacheKey = `user:exists:${email}`;
-
-    // Try fetching from cache
-    const cachedData = await redisClient.get(cacheKey);
-    if (cachedData !== null) {
-      return cachedData === "true";
-    }
-
     const exists = await this.dbService.exists({ email });
-
-    // Cache result
-    await redisClient.set(cacheKey, exists ? "true" : "false", {
-      EX: this.CACHE_EXPIRATION,
-    });
-
     return exists;
   }
 
@@ -115,7 +132,6 @@ class UserService {
     if (user.email) {
       await invalidateCache(this.getUserByEmailKey(user.email));
     }
-    await invalidateCache(this.getAllUsersKey());
 
     return user;
   }

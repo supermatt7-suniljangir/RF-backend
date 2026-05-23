@@ -36,8 +36,6 @@ class UploadController {
 
     const timestamp = Math.round(Date.now() / 1000);
 
-    logger.info("file is: ", file);
-
     const signature = cloudinary.utils.api_sign_request(
       {
         timestamp,

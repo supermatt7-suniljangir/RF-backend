@@ -1,7 +1,7 @@
 import { Router } from "express";
 import userRoutes from "./userRoutes";
 import uploadRoutes from "./uploaderRoutes";
-import searchRoutes from "./serachRoutes";
+import searchRoutes from "./searchRoutes";
 import commentsRoutes from "./commentsRoutes";
 import likesRoutes from "./likesRoutes";
 import bookmarksRoutes from "./bookmarksRoutes";
@@ -9,10 +9,11 @@ import followRoutes from "./followRoutes";
 import toolsRoutes from "./toolsRoutes";
 import projectRoutes from "./projectRoutes";
 import connectRoutes from "./connectRoutes";
-
+import googleRoutes from "./googleAuthRoutes";
 const routerV1 = Router();
 
 routerV1.use("/users", userRoutes);
+routerV1.use("/google", googleRoutes);
 routerV1.use("/projects", projectRoutes);
 routerV1.use("/upload", uploadRoutes);
 routerV1.use("/search", searchRoutes);

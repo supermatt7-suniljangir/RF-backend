@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { AppError } from "./responseTypes";
 import logger from "../config/logger";
 import { STAGES } from "./stages";
+import { NODE_ENV } from "../config/configURLs";
 
 const generateToken = (res: Response, _id: any): string => {
   try {
@@ -16,7 +17,7 @@ const generateToken = (res: Response, _id: any): string => {
       secure: true, // Consistent with clearCookie
       maxAge: 30 * 24 * 60 * 60 * 1000,
       path: "/",
-      domain: ".rf.suniljangir.in",
+      domain: NODE_ENV === STAGES.PROD ? ".rf.suniljangir.in" : undefined,
     });
 
     return token;
