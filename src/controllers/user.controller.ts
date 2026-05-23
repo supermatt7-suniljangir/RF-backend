@@ -1,5 +1,4 @@
 import { NextFunction, Request, Response } from "express";
-import { googleAuth } from "./googleAuth.controller";
 import { Types } from "mongoose";
 import { Profile, Social, UserType } from "../types/user";
 import logger from "../config/logger";
