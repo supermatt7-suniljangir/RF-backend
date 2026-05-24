@@ -1,5 +1,5 @@
-// import { setServers } from "dns/promises";
-// setServers(["1.1.1.1", "1.0.0.1"]); //temporary fix for bad dns envrionment
+import { setServers } from "dns/promises";
+setServers(["1.1.1.1", "1.0.0.1"]); //temporary fix for bad dns envrionment
 import { PORT, NODE_ENV } from "./config/configURLs"; // Configuration for server port
 import { connectDB, disconnectDB } from "./config/db"; // Database connection utilities
 import app from "./app"; // Express application

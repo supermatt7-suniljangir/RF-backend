@@ -28,7 +28,7 @@ class ToolService {
   static async getAllTools() {
     const cacheKey = this.getToolsListKey();
 
-    // // Try fetching from cache
+    // Try fetching from cache
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
       const parsed = JSON.parse(cachedData);

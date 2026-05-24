@@ -77,7 +77,6 @@ class ProjectController {
       }
 
       const project = await ProjectService.getProjectById(projectId);
-
       res
         .status(200)
         .json(success({ data: project, message: "Project fetched" }));
