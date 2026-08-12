@@ -1,6 +1,5 @@
 import { Schema, model, Document, Types } from "mongoose";
 import { ITools, ProjectDocument } from "../../types/project";
-import { title } from "process";
 
 const ThumbnailSchema = new Schema(
   {
@@ -80,7 +79,7 @@ ProjectSchema.index({ status: 1, publishedAt: -1 }); // For listing published pr
 ProjectSchema.index({ featured: 1 }); // Index for filtering by featured status
 ProjectSchema.index({ tags: 1 }); // Index for searching projects by tags (array index)
 ProjectSchema.index({ title: 1 }); // Index for searching projects by title
-ProjectSchema.index({ categories: 1 }); // For category-based searches
+ProjectSchema.index({ category: 1 }); // For category-based searches
 ProjectSchema.index({ creator: 1 }); // For creator
 // Export model
 const Project = model<ProjectDocument>("Project", ProjectSchema);

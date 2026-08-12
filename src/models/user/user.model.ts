@@ -22,8 +22,17 @@ const ProfileSchema = new Schema<Profile>(
     cover: { type: String },
     website: { type: String },
     profession: { type: String },
+    companyName: { type: String },
     social: SocialSchema,
     location: { type: String },
+  },
+  { _id: false, versionKey: false },
+);
+
+const EmployerStatsSchema = new Schema(
+  {
+    jobsPostedCount: { type: Number, default: 0 },
+    activeJobsCount: { type: Number, default: 0 },
   },
   { _id: false, versionKey: false },
 );
@@ -37,6 +46,10 @@ const UserSchema = new Schema<UserDocument>(
     profile: ProfileSchema,
     followersCount: { type: Number, default: 0 }, // New field for followers count
     followingCount: { type: Number, default: 0 }, // New field for following count
+    employerStats: {
+      type: EmployerStatsSchema,
+      default: () => ({ jobsPostedCount: 0, activeJobsCount: 0 }),
+    },
   },
   { timestamps: true, versionKey: false },
 );

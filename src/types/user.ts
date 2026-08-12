@@ -12,6 +12,11 @@ export interface Social {
   github?: string;
 }
 
+export interface EmployerStats {
+  jobsPostedCount: number;
+  activeJobsCount: number;
+}
+
 // Profile interface
 export interface Profile {
   bio?: string;
@@ -19,6 +24,7 @@ export interface Profile {
   cover?: string;
   website?: string;
   profession?: string;
+  companyName?: string;
   availableForHire?: boolean;
   social?: Social;
   location: string;
@@ -33,6 +39,7 @@ export interface UserType {
   fullName: string;
   profile?: Profile;
   password?: string;
+  employerStats?: EmployerStats;
   projects: Types.ObjectId[];
 }
 
@@ -43,6 +50,7 @@ export interface UserDocument extends Document {
   fullName: string;
   profile?: Profile;
   password?: string;
+  employerStats?: EmployerStats;
   projects?: Types.ObjectId[];
   comparePassword?: (enteredPassword: string) => Promise<boolean>;
 }
